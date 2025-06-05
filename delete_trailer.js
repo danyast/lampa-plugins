@@ -4,7 +4,6 @@
         if (e.type == 'complite') {
             e.object.activity.render().find('.view--trailer').remove();
             e.object.activity.render().find('.button--subscribe').remove();
-            e.object.activity.render().find('.open--premium').remove();  
         }
     });
 })();
