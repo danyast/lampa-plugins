@@ -1,4 +1,4 @@
-// v11
+//v12
 /**
  * Lampa TV Refresh Button Plugin - TV App Version
  * Specialized for Android TV applications
@@ -408,28 +408,143 @@
             button.style.transition = 'all 0.8s ease';
             button.style.filter = 'brightness(1.5)';
             
+            // Создаем скрытый iframe для перезагрузки
+            const hardReload = () => {
+                // Создаем скрытый iframe
+                const reloadFrame = document.createElement('iframe');
+                reloadFrame.style.cssText = 'position:fixed;width:100%;height:100%;top:0;left:0;z-index:9999;border:none;';
+                reloadFrame.id = 'tv-refresh-frame';
+                
+                // Добавляем на страницу
+                document.body.appendChild(reloadFrame);
+                
+                // Создаем HTML с редиректом
+                const redirectHTML = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <script>
+                            // Принудительная перезагрузка родительского окна
+                            try {
+                                // Отключаем все обработчики событий в родительском окне
+                                window.parent.onbeforeunload = null;
+                                window.parent.onunload = null;
+                                
+                                // Перезагружаем родительское окно
+                                const url = window.parent.location.href;
+                                const cacheBuster = Date.now();
+                                const separator = url.indexOf('?') !== -1 ? '&' : '?';
+                                const newUrl = url + separator + '_hard_reload=' + cacheBuster;
+                                
+                                // Пробуем разные методы
+                                try {
+                                    window.parent.location.replace(newUrl);
+                                } catch(e) {
+                                    try {
+                                        window.parent.location.href = newUrl;
+                                    } catch(e2) {
+                                        // Если не сработало, пробуем через top
+                                        try {
+                                            top.location.replace(newUrl);
+                                        } catch(e3) {
+                                            top.location.href = newUrl;
+                                        }
+                                    }
+                                }
+                            } catch(e) {
+                                document.write('Перезагрузка не удалась. Пожалуйста, перезапустите приложение вручную.');
+                            }
+                        </script>
+                    </head>
+                    <body style="background:#000;color:#fff;font-family:Arial;text-align:center;padding-top:50px;">
+                        <h2>Перезагрузка...</h2>
+                        <div style="margin:20px auto;width:50px;height:50px;border:5px solid #333;border-top:5px solid #fff;border-radius:50%;animation:spin 1s linear infinite;"></div>
+                        <style>
+                            @keyframes spin {
+                                0% { transform: rotate(0deg); }
+                                100% { transform: rotate(360deg); }
+                            }
+                        </style>
+                    </body>
+                    </html>
+                `;
+                
+                // Записываем HTML в iframe
+                const frameDoc = reloadFrame.contentDocument || reloadFrame.contentWindow.document;
+                frameDoc.open();
+                frameDoc.write(redirectHTML);
+                frameDoc.close();
+                
+                // Если iframe не сработал через 3 секунды, пробуем прямую перезагрузку
+                setTimeout(() => {
+                    // Проверяем, произошла ли перезагрузка
+                    if (document.getElementById('tv-refresh-frame')) {
+                        console.log('[TV Refresh] Iframe method failed, trying direct reload');
+                        
+                        // Удаляем iframe
+                        document.body.removeChild(reloadFrame);
+                        
+                        // Пробуем прямую перезагрузку
+                        try {
+                            // Отключаем все обработчики
+                            window.onbeforeunload = null;
+                            window.onunload = null;
+                            
+                            // Перезагружаем через location
+                            const url = window.location.href;
+                            const cacheBuster = Date.now();
+                            const separator = url.indexOf('?') !== -1 ? '&' : '?';
+                            const newUrl = url + separator + '_emergency_reload=' + cacheBuster;
+                            
+                            window.location.replace(newUrl);
+                        } catch(e) {
+                            console.error('[TV Refresh] Direct reload failed:', e);
+                            
+                            // Последняя попытка - перезагрузка через Lampa API
+                            if (typeof Lampa !== 'undefined') {
+                                try {
+                                    // Пробуем все возможные методы Lampa
+                                    if (Lampa.Application && Lampa.Application.restart) {
+                                        Lampa.Application.restart();
+                                    } else if (Lampa.Activity && Lampa.Activity.restart) {
+                                        Lampa.Activity.restart();
+                                    } else if (Lampa.Activity && Lampa.Activity.refresh) {
+                                        Lampa.Activity.refresh();
+                                    } else {
+                                        // Показываем сообщение о неудаче
+                                        alert('Не удалось перезагрузить приложение. Пожалуйста, перезапустите его вручную.');
+                                    }
+                                } catch(e) {
+                                    console.error('[TV Refresh] Lampa API failed:', e);
+                                    alert('Не удалось перезагрузить приложение. Пожалуйста, перезапустите его вручную.');
+                                }
+                            }
+                        }
+                    }
+                }, 3000);
+            };
+            
             // Try to refresh
             setTimeout(() => {
-                const success = performTVRefresh();
-                
-                if (success) {
+                try {
+                    console.log('[TV Refresh] Attempting hard reload...');
+                    hardReload();
+                    
                     // Success feedback
                     button.style.background = 'rgba(0, 255, 0, 0.3)';
                     button.style.filter = 'brightness(1.3)';
-                    console.log('[TV Refresh] Refresh initiated successfully');
-                } else {
+                } catch (e) {
                     // Error feedback
                     button.style.background = 'rgba(255, 0, 0, 0.5)';
                     button.style.filter = 'brightness(0.8)';
-                    console.error('[TV Refresh] All refresh methods failed');
+                    console.error('[TV Refresh] Hard reload failed:', e);
                     
-                    // Show error message
+                    // Fallback to standard refresh
                     try {
-                        if (typeof alert !== 'undefined') {
-                            alert('Обновление не удалось. Попробуйте перезапустить приложение.');
-                        }
-                    } catch (e) {
-                        console.error('Cannot show alert:', e);
+                        performTVRefresh();
+                    } catch (e2) {
+                        console.error('[TV Refresh] All methods failed:', e2);
                     }
                 }
                 
