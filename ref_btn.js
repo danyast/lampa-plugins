@@ -1,4 +1,8 @@
-//v9
+//v10
+/**
+ * Lampa TV Refresh Button Plugin - TV App Version
+ * Specialized for Android TV applications
+ */
 
 (function() {
     'use strict';
@@ -14,167 +18,280 @@
     function performTVRefresh() {
         console.log('[TV Refresh] Attempting TV-specific refresh...');
         
-        // Method 1: Direct location reload (наиболее эффективный метод)
+        // Принудительная перезагрузка через iframe
+        try {
+            console.log('[TV Refresh] Using forced iframe reload method');
+            
+            // Создаем скрытый iframe для перезагрузки
+            const reloadFrame = document.createElement('iframe');
+            reloadFrame.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;';
+            reloadFrame.onload = function() {
+                // После загрузки iframe, перезагружаем основное окно
+                console.log('[TV Refresh] Iframe loaded, forcing main window reload');
+                
+                // Сохраняем текущий URL
+                const currentUrl = window.location.href;
+                
+                // Добавляем случайный параметр для обхода кэша
+                const cacheBuster = Date.now();
+                const separator = currentUrl.indexOf('?') !== -1 ? '&' : '?';
+                const newUrl = currentUrl + separator + '_reload=' + cacheBuster;
+                
+                // Заменяем текущий URL на новый с параметром перезагрузки
+                window.location.replace(newUrl);
+                
+                // Если replace не сработал, пробуем прямую перезагрузку
+                setTimeout(() => {
+                    window.location.href = newUrl;
+                }, 100);
+            };
+            
+            // Загружаем пустую страницу в iframe
+            document.body.appendChild(reloadFrame);
+            reloadFrame.src = 'about:blank';
+            
+            return true;
+        } catch (e) {
+            console.log('[TV Refresh] Forced iframe reload failed:', e);
+        }
+        
+        // Метод 1: Прямая перезагрузка через location
         try {
             console.log('[TV Refresh] Using direct location.reload()');
-            window.location.reload(true); // true = принудительная перезагрузка без кэша
+            
+            // Отключаем все обработчики событий beforeunload
+            window.onbeforeunload = null;
+            
+            // Пытаемся отключить все слушатели событий, которые могут блокировать перезагрузку
+            const oldPushState = history.pushState;
+            history.pushState = function() {};
+            
+            // Принудительная перезагрузка
+            window.location.reload(true);
+            
+            // Восстанавливаем pushState
+            setTimeout(() => {
+                history.pushState = oldPushState;
+            }, 100);
+            
             return true;
         } catch (e) {
             console.log('[TV Refresh] Direct reload failed:', e);
         }
         
-        // Method 2: Try to trigger Lampa view refresh
+        // Метод 2: Использование Lampa API
         try {
             if (typeof Lampa !== 'undefined') {
                 console.log('[TV Refresh] Using Lampa API...');
                 
-                // Попытка использовать внутренние методы Lampa
-                if (Lampa.Activity && typeof Lampa.Activity.refresh === 'function') {
-                    console.log('[TV Refresh] Using Lampa.Activity.refresh()');
-                    Lampa.Activity.refresh();
-                    return true;
+                // Попытка перезагрузить текущую активность
+                if (Lampa.Activity) {
+                    if (typeof Lampa.Activity.active === 'object' && Lampa.Activity.active) {
+                        console.log('[TV Refresh] Reloading current activity');
+                        
+                        // Сохраняем текущую активность
+                        const currentActivity = Lampa.Activity.active;
+                        
+                        // Пытаемся перезагрузить активность
+                        if (typeof currentActivity.refresh === 'function') {
+                            currentActivity.refresh();
+                            return true;
+                        }
+                        
+                        // Пытаемся перезапустить активность
+                        if (typeof currentActivity.start === 'function') {
+                            currentActivity.start();
+                            return true;
+                        }
+                        
+                        // Пытаемся перезагрузить через destroy и повторный запуск
+                        if (typeof currentActivity.destroy === 'function' && 
+                            typeof currentActivity.create === 'function') {
+                            currentActivity.destroy();
+                            setTimeout(() => {
+                                currentActivity.create();
+                            }, 100);
+                            return true;
+                        }
+                    }
+                    
+                    // Общий метод обновления активности
+                    if (typeof Lampa.Activity.refresh === 'function') {
+                        console.log('[TV Refresh] Using Lampa.Activity.refresh()');
+                        Lampa.Activity.refresh();
+                        return true;
+                    }
                 }
                 
                 // Попытка использовать Controller
-                if (Lampa.Controller && typeof Lampa.Controller.toggle === 'function') {
-                    console.log('[TV Refresh] Using Lampa.Controller.toggle()');
-                    Lampa.Controller.toggle('refresh');
-                    return true;
+                if (Lampa.Controller) {
+                    if (typeof Lampa.Controller.toggle === 'function') {
+                        console.log('[TV Refresh] Using Lampa.Controller.toggle()');
+                        Lampa.Controller.toggle('refresh');
+                        return true;
+                    }
+                    
+                    // Попытка перезагрузить через сброс и повторную активацию контроллера
+                    if (typeof Lampa.Controller.clear === 'function' && 
+                        typeof Lampa.Controller.enable === 'function') {
+                        console.log('[TV Refresh] Resetting and re-enabling controller');
+                        Lampa.Controller.clear();
+                        setTimeout(() => {
+                            Lampa.Controller.enable();
+                        }, 100);
+                        return true;
+                    }
                 }
                 
                 // Попытка использовать Listener
                 if (Lampa.Listener && Lampa.Listener.emit) {
                     console.log('[TV Refresh] Using Lampa.Listener.emit()');
-                    Lampa.Listener.emit('refresh');
-                    Lampa.Listener.emit('view', { type: 'refresh' });
-                    Lampa.Listener.emit('activity', { type: 'refresh' });
+                    
+                    // Отправляем все возможные события обновления
+                    ['refresh', 'update', 'reload', 'reset'].forEach(event => {
+                        Lampa.Listener.emit(event);
+                        Lampa.Listener.emit('view', { type: event });
+                        Lampa.Listener.emit('activity', { type: event });
+                    });
+                    
                     return true;
+                }
+                
+                // Попытка использовать Storage для сброса кэша
+                if (Lampa.Storage && typeof Lampa.Storage.set === 'function') {
+                    console.log('[TV Refresh] Resetting cache via Storage');
+                    Lampa.Storage.set('cache_index', {});
+                    Lampa.Storage.set('cache_view', {});
+                    
+                    // Перезагрузка после сброса кэша
+                    if (Lampa.Activity && typeof Lampa.Activity.refresh === 'function') {
+                        setTimeout(() => {
+                            Lampa.Activity.refresh();
+                        }, 100);
+                        return true;
+                    }
                 }
             }
         } catch (e) {
             console.log('[TV Refresh] Lampa API failed:', e);
         }
         
-        // Method 3: Try Android TV specific methods
+        // Метод 3: Android TV и WebView методы
         try {
+            // Android методы
             if (window.Android) {
-                if (typeof window.Android.reload === 'function') {
-                    console.log('[TV Refresh] Using Android.reload()');
-                    window.Android.reload();
-                    return true;
-                }
+                const androidMethods = ['reload', 'refreshPage', 'refresh', 'restartApp', 'reloadWebView'];
                 
-                if (typeof window.Android.refreshPage === 'function') {
-                    console.log('[TV Refresh] Using Android.refreshPage()');
-                    window.Android.refreshPage();
-                    return true;
+                for (const method of androidMethods) {
+                    if (typeof window.Android[method] === 'function') {
+                        console.log(`[TV Refresh] Using Android.${method}()`);
+                        window.Android[method]();
+                        return true;
+                    }
+                }
+            }
+            
+            // WebView методы
+            if (window.WebView) {
+                const webviewMethods = ['reload', 'refresh', 'restart'];
+                
+                for (const method of webviewMethods) {
+                    if (typeof window.WebView[method] === 'function') {
+                        console.log(`[TV Refresh] Using WebView.${method}()`);
+                        window.WebView[method]();
+                        return true;
+                    }
                 }
             }
         } catch (e) {
-            console.log('[TV Refresh] Android methods failed:', e);
+            console.log('[TV Refresh] Android/WebView methods failed:', e);
         }
         
-        // Method 4: Try WebView refresh methods
+        // Метод 4: Перезагрузка через динамический скрипт
         try {
-            if (window.WebView && typeof window.WebView.reload === 'function') {
-                console.log('[TV Refresh] Using WebView.reload()');
-                window.WebView.reload();
-                return true;
-            }
-        } catch (e) {
-            console.log('[TV Refresh] WebView reload failed:', e);
-        }
-        
-        // Method 5: Try to reload via iframe if available
-        try {
-            const iframes = document.querySelectorAll('iframe');
-            if (iframes.length > 0) {
-                console.log('[TV Refresh] Reloading iframes...');
-                iframes.forEach(iframe => {
-                    if (iframe.src) {
-                        iframe.src = iframe.src;
+            console.log('[TV Refresh] Trying dynamic script reload');
+            
+            // Создаем и выполняем скрипт перезагрузки
+            const reloadScript = document.createElement('script');
+            reloadScript.textContent = `
+                (function() {
+                    // Отключаем все обработчики, которые могут блокировать перезагрузку
+                    window.onbeforeunload = null;
+                    
+                    // Пытаемся разными способами перезагрузить страницу
+                    try {
+                        window.location.reload(true);
+                    } catch(e) {
+                        try {
+                            window.location.href = window.location.href + '?_reload=' + Date.now();
+                        } catch(e2) {
+                            document.location.href = document.location.href;
+                        }
                     }
-                });
-                return true;
-            }
-        } catch (e) {
-            console.log('[TV Refresh] Iframe reload failed:', e);
-        }
-        
-        // Method 6: Try to refresh via location hash
-        try {
-            const currentHash = window.location.hash;
-            console.log('[TV Refresh] Refreshing via hash change...');
-            window.location.hash = currentHash ? '' : '#refresh';
-            setTimeout(() => {
-                window.location.hash = currentHash || '';
-            }, 100);
+                })();
+            `;
+            
+            document.head.appendChild(reloadScript);
+            document.head.removeChild(reloadScript);
+            
             return true;
         } catch (e) {
-            console.log('[TV Refresh] Hash refresh failed:', e);
+            console.log('[TV Refresh] Dynamic script reload failed:', e);
         }
         
-        // Method 7: Try to force DOM refresh
+        // Метод 5: Полная перезагрузка DOM
         try {
-            console.log('[TV Refresh] Forcing DOM refresh...');
+            console.log('[TV Refresh] Forcing complete DOM refresh...');
+            
+            // Сохраняем важные объекты
+            const savedLampa = window.Lampa;
             
             // Сохраняем текущее состояние скролла
             const scrollX = window.scrollX;
             const scrollY = window.scrollY;
             
-            // Remove and re-add body content
-            const body = document.body;
-            const originalContent = body.innerHTML;
+            // Сохраняем все скрипты
+            const scripts = Array.from(document.scripts).map(script => {
+                return {
+                    src: script.src,
+                    text: script.text,
+                    type: script.type
+                };
+            });
             
-            body.innerHTML = '';
-            setTimeout(() => {
-                body.innerHTML = originalContent;
-                
-                // Восстанавливаем скролл
-                window.scrollTo(scrollX, scrollY);
-                
-                console.log('[TV Refresh] DOM refreshed');
-                
-                // Попытка восстановить обработчики событий
-                if (typeof Lampa !== 'undefined' && Lampa.Controller) {
-                    if (typeof Lampa.Controller.enable === 'function') {
-                        Lampa.Controller.enable();
-                    }
-                }
-            }, 100);
+            // Полностью очищаем DOM
+            const html = document.documentElement.outerHTML;
+            document.open();
+            document.write(html);
+            document.close();
             
-            return true;
-        } catch (e) {
-            console.log('[TV Refresh] DOM refresh failed:', e);
-        }
-        
-        // Method 8: Try to use history API
-        try {
-            console.log('[TV Refresh] Using history API...');
-            const currentUrl = window.location.href;
-            history.pushState({}, '', currentUrl + '?refresh=' + Date.now());
-            history.go(0); // Перезагрузка текущей страницы
-            return true;
-        } catch (e) {
-            console.log('[TV Refresh] History API failed:', e);
-        }
-        
-        // Method 9: Final fallback - try to restart the app view
-        try {
-            console.log('[TV Refresh] Trying app restart...');
+            // Восстанавливаем скролл
+            window.scrollTo(scrollX, scrollY);
             
-            // Clear all intervals and timeouts
-            const highestTimeoutId = setTimeout(";");
-            for (let i = 0; i < highestTimeoutId; i++) {
-                clearTimeout(i);
-                clearInterval(i);
+            // Восстанавливаем Lampa если была
+            if (savedLampa && !window.Lampa) {
+                window.Lampa = savedLampa;
             }
             
-            // Force a complete page reload with cache bypass
-            const currentLocation = window.location.href;
-            const separator = currentLocation.indexOf('?') !== -1 ? '&' : '?';
-            const newLocation = currentLocation + separator + '_refresh=' + Date.now();
-            window.location.href = newLocation;
+            console.log('[TV Refresh] DOM completely refreshed');
+            return true;
+        } catch (e) {
+            console.log('[TV Refresh] Complete DOM refresh failed:', e);
+        }
+        
+        // Метод 6: Экстренная перезагрузка через location.replace
+        try {
+            console.log('[TV Refresh] Emergency reload via location.replace');
+            
+            // Добавляем случайный параметр для обхода кэша
+            const currentUrl = window.location.href;
+            const cacheBuster = Date.now();
+            const separator = currentUrl.indexOf('?') !== -1 ? '&' : '?';
+            const newUrl = currentUrl + separator + '_emergency_reload=' + cacheBuster;
+            
+            // Используем replace для замены текущей записи в истории
+            window.location.replace(newUrl);
+            
             return true;
         } catch (e) {
             console.error('[TV Refresh] All methods failed:', e);
