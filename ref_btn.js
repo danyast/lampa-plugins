@@ -1,28 +1,35 @@
-/**
- * Lampa TV Auto Refresh Button 5.0
- * Автоматически добавляет кнопку обновления в интерфейс
- * Работает в TV приложениях без консоли
- */
-
-// Auto Refresh Button - Автоматически создает кнопку
+// Top Menu Only Refresh - ТОЛЬКО в верхнем меню 6
 (function () {
     "use strict";
     
-    console.log('🚀 Auto Refresh Button Starting...');
-    
-    // Функция создания кнопки
-    function createRefreshButton() {
-        // Создаем кнопку
-        var button = document.createElement('div');
-        button.innerHTML = '🔄';
-        button.style.cssText = 'position:fixed;top:20px;right:20px;width:50px;height:50px;background:#ff6b6b;color:white;border-radius:25px;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.5);z-index:999999;transition:all 0.3s ease;';
+    // Функция добавления в верхнее меню
+    function addToTopMenu() {
+        // Ищем верхнее меню
+        var topMenu = document.querySelector('.head__actions');
         
-        // Добавляем на страницу
-        document.body.appendChild(button);
+        if (!topMenu) {
+            console.log('❌ Верхнее меню не найдено');
+            return false;
+        }
+        
+        // Проверяем, нет ли уже кнопки
+        if (topMenu.querySelector('.refresh-top-btn')) {
+            console.log('✅ Кнопка уже добавлена');
+            return true;
+        }
+        
+        // Создаем кнопку для верхнего меню
+        var button = document.createElement('div');
+        button.className = 'head__action selector refresh-top-btn';
+        button.innerHTML = '🔄';
+        button.title = 'Обновить';
+        
+        // Добавляем в верхнее меню
+        topMenu.appendChild(button);
         
         // Обработчик клика
         button.onclick = function() {
-            // Анимация клика
+            // Анимация
             button.style.transform = 'scale(1.2) rotate(360deg)';
             button.style.opacity = '0.7';
             
@@ -38,67 +45,42 @@
             }, 1000);
         };
         
-        // Hover эффекты
-        button.onmouseenter = function() {
-            button.style.transform = 'scale(1.1)';
-            button.style.opacity = '0.8';
-        };
-        
-        button.onmouseleave = function() {
-            button.style.transform = 'scale(1)';
-            button.style.opacity = '1';
-        };
-        
-        console.log('✅ Кнопка обновления создана');
-        return button;
+        console.log('✅ Кнопка добавлена в верхнее меню');
+        return true;
     }
     
     // Функция обновления
     function performRefresh() {
-        console.log('🔄 Выполняем обновление...');
-        
         // Метод 1: Lampa view refresh
         try {
             if (typeof Lampa !== 'undefined' && Lampa.Listener && Lampa.Listener.emit) {
                 Lampa.Listener.emit('view', { type: 'refresh' });
-                console.log('✅ Lampa view refresh отправлен');
                 return;
             }
-        } catch (e) {
-            console.log('❌ Lampa view refresh ошибка:', e);
-        }
+        } catch (e) {}
         
         // Метод 2: Lampa navigation refresh
         try {
             if (typeof Lampa !== 'undefined' && Lampa.Listener && Lampa.Listener.emit) {
                 Lampa.Listener.emit('navigate', { type: 'refresh' });
-                console.log('✅ Lampa navigation refresh отправлен');
                 return;
             }
-        } catch (e) {
-            console.log('❌ Lampa navigation refresh ошибка:', e);
-        }
+        } catch (e) {}
         
         // Метод 3: Lampa full refresh
         try {
             if (typeof Lampa !== 'undefined' && Lampa.Listener && Lampa.Listener.emit) {
                 Lampa.Listener.emit('full', { type: 'refresh' });
-                console.log('✅ Lampa full refresh отправлен');
                 return;
             }
-        } catch (e) {
-            console.log('❌ Lampa full refresh ошибка:', e);
-        }
+        } catch (e) {}
         
         // Fallback: page reload
         try {
             if (window.location && window.location.reload) {
-                console.log('🔄 Выполняем page reload...');
                 window.location.reload();
             }
-        } catch (e) {
-            console.log('❌ Page reload ошибка:', e);
-        }
+        } catch (e) {}
     }
     
     // Функция инициализации
@@ -106,30 +88,25 @@
         // Ждем загрузки DOM
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(createRefreshButton, 2000); // Ждем 2 секунды
+                setTimeout(addToTopMenu, 1000);
             });
         } else {
-            setTimeout(createRefreshButton, 2000); // Ждем 2 секунды
+            setTimeout(addToTopMenu, 1000);
         }
         
-        // Дополнительная проверка через 5 секунд
-        setTimeout(function() {
-            if (!document.querySelector('.refresh-button')) {
-                createRefreshButton();
-            }
-        }, 5000);
+        // Дополнительные попытки
+        setTimeout(addToTopMenu, 3000);
+        setTimeout(addToTopMenu, 5000);
         
-        // Периодическая проверка каждые 10 секунд
+        // Периодическая проверка каждые 15 секунд
         setInterval(function() {
-            if (!document.querySelector('.refresh-button')) {
-                createRefreshButton();
+            if (!document.querySelector('.refresh-top-btn')) {
+                addToTopMenu();
             }
-        }, 10000);
+        }, 15000);
     }
     
-    // Запускаем инициализацию
+    // Запускаем
     init();
-    
-    console.log('🚀 Auto Refresh Button Ready!');
     
 })();
