@@ -1,136 +1,180 @@
-// Basic Test Script - Проверяем работает ли JavaScript вообще 18
-// Простой тест для диагностики проблем
+/**
+ * Lampa TV Native Refresh Plugin 19
+ * Работает напрямую через Lampa API без DOM манипуляций
+ * Специально для TV приложений
+ */
 
 (function() {
     'use strict';
     
-    console.log('🧪 Basic Test Script Starting...');
+    console.log('🔄 Lampa Native Refresh Plugin Starting...');
     
-    // Тест 1: Простой alert
-    try {
-        alert('JavaScript работает! Если видишь это сообщение - JS включен.');
-        console.log('✅ Alert работает');
-    } catch (e) {
-        console.error('❌ Alert не работает:', e);
+    // Проверяем доступность Lampa
+    if (typeof Lampa === 'undefined') {
+        console.error('❌ Lampa не доступна');
+        return;
     }
     
-    // Тест 2: Создать простой элемент
-    try {
-        const testDiv = document.createElement('div');
-        testDiv.innerHTML = 'TEST DIV';
-        testDiv.style.cssText = `
-            position: fixed;
-            top: 200px;
-            left: 200px;
-            background: red;
-            color: white;
-            padding: 20px;
-            font-size: 24px;
-            z-index: 999999;
-        `;
-        
-        document.body.appendChild(testDiv);
-        console.log('✅ Test div создан и добавлен');
-        
-        // Удалить через 5 секунд
-        setTimeout(() => {
-            if (testDiv.parentNode) {
-                testDiv.parentNode.removeChild(testDiv);
-                console.log('✅ Test div удален');
-            }
-        }, 5000);
-        
-    } catch (e) {
-        console.error('❌ Не удалось создать test div:', e);
-    }
+    console.log('✅ Lampa доступна:', Lampa);
     
-    // Тест 3: Проверить Lampa
-    try {
-        if (typeof Lampa !== 'undefined') {
-            console.log('✅ Lampa доступна:', Lampa);
-            if (Lampa.Listener) {
-                console.log('✅ Lampa.Listener доступен');
-            } else {
-                console.log('❌ Lampa.Listener недоступен');
+    // Функция обновления через Lampa API
+    function refreshViaLampa() {
+        console.log('🔄 Attempting refresh via Lampa API...');
+        
+        try {
+            // Метод 1: Попробовать обновить текущий view
+            if (Lampa.Listener && Lampa.Listener.emit) {
+                console.log('🔄 Emitting view refresh event...');
+                Lampa.Listener.emit('view', { type: 'refresh' });
+                return true;
             }
-        } else {
-            console.log('❌ Lampa недоступна');
+        } catch (e) {
+            console.log('❌ View refresh failed:', e);
         }
-    } catch (e) {
-        console.error('❌ Ошибка при проверке Lampa:', e);
+        
+        try {
+            // Метод 2: Попробовать обновить через navigation
+            if (Lampa.Listener && Lampa.Listener.emit) {
+                console.log('🔄 Emitting navigation refresh event...');
+                Lampa.Listener.emit('navigate', { type: 'refresh' });
+                return true;
+            }
+        } catch (e) {
+            console.log('❌ Navigation refresh failed:', e);
+        }
+        
+        try {
+            // Метод 3: Попробовать обновить через full event
+            if (Lampa.Listener && Lampa.Listener.emit) {
+                console.log('🔄 Emitting full refresh event...');
+                Lampa.Listener.emit('full', { type: 'refresh' });
+                return true;
+            }
+        } catch (e) {
+            console.log('❌ Full refresh failed:', e);
+        }
+        
+        try {
+            // Метод 4: Попробовать обновить через activity
+            if (Lampa.Activity && Lampa.Activity.current) {
+                console.log('🔄 Refreshing current activity...');
+                const currentActivity = Lampa.Activity.current();
+                if (currentActivity && currentActivity.render) {
+                    currentActivity.render();
+                    return true;
+                }
+            }
+        } catch (e) {
+            console.log('❌ Activity refresh failed:', e);
+        }
+        
+        try {
+            // Метод 5: Попробовать обновить через router
+            if (Lampa.Router && Lampa.Router.refresh) {
+                console.log('🔄 Using Lampa Router refresh...');
+                Lampa.Router.refresh();
+                return true;
+            }
+        } catch (e) {
+            console.log('❌ Router refresh failed:', e);
+        }
+        
+        try {
+            // Метод 6: Попробовать обновить через storage
+            if (Lampa.Storage && Lampa.Storage.clear) {
+                console.log('🔄 Clearing Lampa storage...');
+                Lampa.Storage.clear();
+                return true;
+            }
+        } catch (e) {
+            console.log('❌ Storage clear failed:', e);
+        }
+        
+        console.log('❌ All Lampa API methods failed');
+        return false;
     }
     
-    // Тест 4: Проверить DOM элементы
-    try {
-        const selectors = [
-            '.head__actions',
-            '.head__action',
-            '.view--header',
-            '.view--navigation',
-            'body',
-            'html'
-        ];
+    // Функция принудительного обновления
+    function forceRefresh() {
+        console.log('🔄 Force refresh triggered...');
         
-        console.log('🔍 Проверяем DOM элементы:');
-        selectors.forEach(selector => {
-            try {
-                const element = document.querySelector(selector);
-                if (element) {
-                    console.log(`✅ Найден: ${selector}`);
-                    console.log('  - Tag:', element.tagName);
-                    console.log('  - Classes:', element.className);
-                    console.log('  - Children:', element.children.length);
-                } else {
-                    console.log(`❌ Не найден: ${selector}`);
-                }
-            } catch (e) {
-                console.error(`❌ Ошибка при поиске ${selector}:`, e);
+        try {
+            // Попробовать Lampa API
+            if (refreshViaLampa()) {
+                console.log('✅ Refresh via Lampa API successful');
+                return;
+            }
+        } catch (e) {
+            console.log('❌ Lampa API refresh failed:', e);
+        }
+        
+        try {
+            // Fallback: попробовать обновить страницу
+            console.log('🔄 Trying page reload fallback...');
+            
+            // Попробовать разные методы обновления
+            if (window.location && window.location.reload) {
+                window.location.reload();
+            } else if (window.location && window.location.href) {
+                window.location.href = window.location.href;
+            } else if (window.history && window.history.go) {
+                window.history.go(0);
+            } else {
+                console.log('❌ No refresh methods available');
+            }
+        } catch (e) {
+            console.error('❌ All refresh methods failed:', e);
+        }
+    }
+    
+    // Слушаем события Lampa для автоматического обновления
+    if (Lampa.Listener && Lampa.Listener.follow) {
+        console.log('✅ Setting up Lampa event listeners...');
+        
+        // Слушаем завершение загрузки
+        Lampa.Listener.follow('full', function(e) {
+            if (e.type === 'complite') {
+                console.log('🔄 Full load completed, refresh plugin ready');
             }
         });
         
-    } catch (e) {
-        console.error('❌ Ошибка при проверке DOM:', e);
+        // Слушаем изменения view
+        Lampa.Listener.follow('view', function(e) {
+            if (e.type === 'complite') {
+                console.log('🔄 View loaded, refresh plugin active');
+            }
+        });
+        
+        // Слушаем навигацию
+        Lampa.Listener.follow('navigate', function(e) {
+            console.log('🔄 Navigation event:', e);
+        });
+        
+    } else {
+        console.log('❌ Lampa.Listener not available');
     }
     
-    // Тест 5: Простая кнопка без сложной логики
-    try {
-        const simpleButton = document.createElement('button');
-        simpleButton.textContent = 'TEST BUTTON';
-        simpleButton.style.cssText = `
-            position: fixed;
-            top: 300px;
-            left: 200px;
-            background: blue;
-            color: white;
-            padding: 15px;
-            font-size: 18px;
-            border: none;
-            border-radius: 5px;
-            z-index: 999999;
-        `;
-        
-        // Простой обработчик
-        simpleButton.onclick = function() {
-            console.log('🎯 Test button clicked!');
-            this.style.background = 'green';
-            alert('Кнопка работает!');
+    // Добавляем глобальную функцию для обновления
+    if (typeof window !== 'undefined') {
+        window.lampaRefresh = function() {
+            console.log('🔄 Global refresh function called');
+            forceRefresh();
         };
         
-        document.body.appendChild(simpleButton);
-        console.log('✅ Test button создан и добавлен');
-        
-        // Удалить через 10 секунд
-        setTimeout(() => {
-            if (simpleButton.parentNode) {
-                simpleButton.parentNode.removeChild(simpleButton);
-                console.log('✅ Test button удален');
-            }
-        }, 10000);
-        
-    } catch (e) {
-        console.error('❌ Не удалось создать test button:', e);
+        console.log('✅ Global refresh function added: window.lampaRefresh()');
     }
     
-    console.log('🧪 Basic Test Script завершен. Проверь консоль для результатов.');
+    // Добавляем в Lampa объект если возможно
+    if (Lampa && typeof Lampa === 'object') {
+        Lampa.refresh = function() {
+            console.log('🔄 Lampa.refresh() called');
+            forceRefresh();
+        };
+        
+        console.log('✅ Lampa.refresh() function added');
+    }
+    
+    console.log('🔄 Lampa Native Refresh Plugin Ready!');
+    console.log('🔄 Use: window.lampaRefresh() or Lampa.refresh()');
     
 })();
