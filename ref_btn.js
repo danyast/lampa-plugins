@@ -1,5 +1,5 @@
 /**
- * Lampa TV Refresh Button Plugin - TV App Version 15
+ * Lampa TV Refresh Button Plugin - TV App Version 16
  * Specialized for Android TV applications
  */
 
@@ -383,9 +383,14 @@
         button.setAttribute('data-action', 'refresh');
         button.setAttribute('data-controller', 'true');
         
-        // Добавляем стили для фокуса
+        // Добавляем стили для фокуса и видимости
         button.style.cursor = 'pointer';
         button.style.outline = 'none';
+        button.style.position = 'relative';
+        button.style.zIndex = '9999';
+        button.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        button.style.borderRadius = '5px';
+        button.style.padding = '5px';
         
         button.innerHTML = `
             <svg width="25" height="23" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -425,179 +430,160 @@
         
         // Add click functionality with visual feedback
         button.addEventListener('click', () => {
-            console.log('[TV Refresh] Button clicked, starting refresh sequence...');
+            console.log('[TV Refresh] Button clicked, starting direct WebView refresh...');
             
             // Visual feedback
             button.style.transform = 'rotate(360deg) scale(1.2)';
             button.style.transition = 'all 0.8s ease';
             button.style.filter = 'brightness(1.5)';
             
-            // Экстремальная перезагрузка через динамический скрипт
-            const extremeReload = () => {
-                console.log('[TV Refresh] Attempting extreme reload via dynamic script injection');
+            // Прямой метод перезагрузки для Android TV WebView
+            try {
+                // Создаем скрытый элемент для отображения статуса
+                const status = document.createElement('div');
+                status.style.position = 'fixed';
+                status.style.top = '10px';
+                status.style.left = '10px';
+                status.style.padding = '10px';
+                status.style.background = 'rgba(0,0,0,0.7)';
+                status.style.color = 'white';
+                status.style.borderRadius = '5px';
+                status.style.zIndex = '9999999';
+                status.textContent = 'Перезагрузка...';
+                document.body.appendChild(status);
                 
-                // Создаем скрипт, который будет выполнен после текущего цикла событий
-                const script = document.createElement('script');
-                script.textContent = `
-                    (function() {
-                        // Отключаем все возможные обработчики событий
-                        window.onbeforeunload = null;
-                        window.onunload = null;
-                        
-                        // Функция для принудительной перезагрузки
-                        function forceReload() {
-                            try {
-                                // Пробуем найти и использовать нативные методы перезагрузки
-                                if (window.Android && typeof window.Android.restartApp === 'function') {
-                                    window.Android.restartApp();
-                                    return;
-                                }
-                                
-                                if (window.AndroidTV && typeof window.AndroidTV.reload === 'function') {
-                                    window.AndroidTV.reload();
-                                    return;
-                                }
-                                
-                                // Пробуем перезагрузить через Lampa API
-                                if (window.Lampa) {
-                                    // Сбрасываем все кэши
-                                    if (window.Lampa.Storage) {
-                                        try {
-                                            window.Lampa.Storage.set('cache_index', {});
-                                            window.Lampa.Storage.set('cache_view', {});
-                                            window.Lampa.Storage.set('torrents', {});
-                                        } catch(e) {}
-                                    }
-                                    
-                                    // Пробуем все возможные методы перезагрузки
-                                    if (window.Lampa.Application && window.Lampa.Application.restart) {
-                                        window.Lampa.Application.restart();
-                                        return;
-                                    }
-                                    
-                                    if (window.Lampa.Activity && window.Lampa.Activity.restart) {
-                                        window.Lampa.Activity.restart();
-                                        return;
-                                    }
-                                    
-                                    if (window.Lampa.Activity && window.Lampa.Activity.refresh) {
-                                        window.Lampa.Activity.refresh();
-                                        return;
-                                    }
-                                }
-                                
-                                // Если ничего не сработало, используем самый радикальный метод
-                                // Создаем скрытый iframe для перезагрузки
-                                const reloadFrame = document.createElement('iframe');
-                                reloadFrame.style.cssText = 'position:fixed;width:100%;height:100%;top:0;left:0;z-index:9999;border:none;';
-                                document.body.appendChild(reloadFrame);
-                                
-                                // Создаем HTML с редиректом
-                                const frameDoc = reloadFrame.contentDocument || reloadFrame.contentWindow.document;
-                                frameDoc.open();
-                                frameDoc.write(\`
-                                    <!DOCTYPE html>
-                                    <html>
-                                    <head>
-                                        <meta charset="UTF-8">
-                                        <script>
-                                            // Принудительная перезагрузка родительского окна
-                                            try {
-                                                // Отключаем все обработчики событий
-                                                window.parent.onbeforeunload = null;
-                                                window.parent.onunload = null;
-                                                
-                                                // Перезагружаем через location
-                                                const url = window.parent.location.href;
-                                                const cacheBuster = Date.now();
-                                                const separator = url.indexOf('?') !== -1 ? '&' : '?';
-                                                const newUrl = url + separator + '_extreme_reload=' + cacheBuster;
-                                                
-                                                // Пробуем разные методы
-                                                try {
-                                                    window.parent.location.replace(newUrl);
-                                                } catch(e) {
-                                                    window.parent.location.href = newUrl;
-                                                }
-                                            } catch(e) {
-                                                document.write('Перезагрузка не удалась');
-                                            }
-                                        </script>
-                                    </head>
-                                    <body style="background:#000;color:#fff;text-align:center;padding-top:50px;">
-                                        <h2>Перезагрузка...</h2>
-                                    </body>
-                                    </html>
-                                \`);
-                                frameDoc.close();
-                                
-                                // Если iframe не сработал через 2 секунды, пробуем прямую перезагрузку
-                                setTimeout(function() {
-                                    // Прямая перезагрузка
-                                    const url = window.location.href;
-                                    const cacheBuster = Date.now();
-                                    const separator = url.indexOf('?') !== -1 ? '&' : '?';
-                                    const newUrl = url + separator + '_direct_reload=' + cacheBuster;
-                                    
-                                    window.location.replace(newUrl);
-                                }, 2000);
-                            } catch(e) {
-                                console.error('[TV Refresh] Force reload failed:', e);
-                                
-                                // Последняя попытка - перезагрузка через document.write
-                                try {
-                                    const currentUrl = window.location.href;
-                                    document.open();
-                                    document.write(\`
-                                        <!DOCTYPE html>
-                                        <html>
-                                        <head>
-                                            <meta http-equiv="refresh" content="0;url=\${currentUrl}">
-                                        </head>
-                                        <body>
-                                            <h1>Перезагрузка...</h1>
-                                        </body>
-                                        </html>
-                                    \`);
-                                    document.close();
-                                } catch(e2) {
-                                    console.error('[TV Refresh] Document write failed:', e2);
-                                }
-                            }
-                        }
-                        
-                        // Запускаем перезагрузку с небольшой задержкой
-                        setTimeout(forceReload, 100);
-                    })();
-                `;
+                // 1. Прямой доступ к Android WebView
+                if (window.AndroidTV && typeof window.AndroidTV.reloadWebView === 'function') {
+                    status.textContent = 'Перезагрузка через AndroidTV.reloadWebView()';
+                    window.AndroidTV.reloadWebView();
+                    return;
+                }
                 
-                // Добавляем скрипт на страницу
-                document.head.appendChild(script);
+                // 2. Доступ через JavascriptInterface
+                if (window.Android && typeof window.Android.reloadPage === 'function') {
+                    status.textContent = 'Перезагрузка через Android.reloadPage()';
+                    window.Android.reloadPage();
+                    return;
+                }
                 
-                // Удаляем скрипт после выполнения
+                // 3. Доступ через WebView Bridge
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.refresh) {
+                    status.textContent = 'Перезагрузка через webkit.messageHandlers.refresh';
+                    window.webkit.messageHandlers.refresh.postMessage({action: 'reload'});
+                    return;
+                }
+                
+                // 4. Прямой вызов нативных методов через prompt
+                status.textContent = 'Перезагрузка через prompt bridge';
+                try {
+                    prompt('lampa://reload', '');
+                    return;
+                } catch(e) {
+                    console.log('[TV Refresh] Prompt bridge failed:', e);
+                }
+                
+                // 5. Отправка специального события, которое может перехватить нативный код
+                status.textContent = 'Отправка события lampa_reload';
+                const reloadEvent = new CustomEvent('lampa_reload', {
+                    detail: {
+                        timestamp: Date.now(),
+                        force: true
+                    }
+                });
+                window.dispatchEvent(reloadEvent);
+                
+                // 6. Попытка использовать location с блокировкой событий
                 setTimeout(() => {
-                    if (script.parentNode) {
-                        script.parentNode.removeChild(script);
+                    status.textContent = 'Принудительная перезагрузка через location';
+                    
+                    // Блокируем все события, которые могут помешать перезагрузке
+                    window.onbeforeunload = null;
+                    window.onunload = null;
+                    
+                    // Используем все возможные методы перезагрузки
+                    try {
+                        const url = window.location.href;
+                        const cacheBuster = Date.now();
+                        const separator = url.indexOf('?') !== -1 ? '&' : '?';
+                        const newUrl = url + separator + '_reload=' + cacheBuster;
+                        
+                        // Пробуем разные методы перезагрузки
+                        window.location.replace(newUrl);
+                        setTimeout(() => window.location.href = newUrl, 100);
+                    } catch(e) {
+                        console.log('[TV Refresh] Location reload failed:', e);
+                    }
+                }, 500);
+                
+                // 7. Последняя надежда - полная перезагрузка через Lampa API
+                setTimeout(() => {
+                    status.textContent = 'Перезагрузка через Lampa API';
+                    
+                    if (typeof Lampa !== 'undefined') {
+                        // Пробуем все возможные методы Lampa API
+                        if (Lampa.Application && Lampa.Application.restart) {
+                            Lampa.Application.restart();
+                        } else if (Lampa.Activity && Lampa.Activity.restart) {
+                            Lampa.Activity.restart();
+                        } else if (Lampa.Activity && Lampa.Activity.refresh) {
+                            Lampa.Activity.refresh();
+                        }
                     }
                 }, 1000);
-            };
-            
-            // Метод перезагрузки через WebView Bridge
-            const webViewReload = () => {
-                console.log('[TV Refresh] Attempting WebView Bridge reload');
                 
-                // Создаем и вызываем специальное событие для WebView
-                try {
-                    // Создаем событие для нативного моста
-                    const event = new CustomEvent('lampa_reload', {
-                        detail: {
-                            action: 'reload',
-                            timestamp: Date.now()
-                        }
-                    });
-                    
-                    // Отправляем событие
-                    window.dispatchEvent(event);
+            } catch(e) {
+                console.error('[TV Refresh] All direct methods failed:', e);
+                // Если все методы не сработали, пробуем стандартный метод
+                performTVRefresh();
+            }
+        });
+        
+        return button;
+    // Функция для инициализации плагина
+    function initPlugin() {
+        console.log('[TV Refresh] Initializing plugin...');
+        
+        // Проверяем, есть ли уже кнопка на странице
+        if (document.querySelector('.tv-refresh-button')) {
+            console.log('[TV Refresh] Button already exists, skipping initialization');
+            return;
+        }
+        
+        // Находим место для вставки кнопки
+        const headerActions = document.querySelector('.head__actions');
+        if (!headerActions) {
+            console.log('[TV Refresh] Header actions not found, waiting...');
+            // Если элемент не найден, пробуем позже
+            setTimeout(initPlugin, 1000);
+            return;
+        }
+        
+        // Создаем кнопку
+        const refreshButton = createTVButton();
+        
+        // Вставляем кнопку в интерфейс
+        headerActions.appendChild(refreshButton);
+        
+        console.log('[TV Refresh] Button added to interface');
+    }
+    
+    // Запускаем инициализацию плагина после загрузки DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPlugin);
+    } else {
+        initPlugin();
+    }
+    
+    // Регистрируем плагин в Lampa, если API доступен
+    if (typeof Lampa !== 'undefined' && Lampa.Plugins) {
+        Lampa.Plugins.register(PLUGIN_CONFIG);
+    }
+    
+    // Экспортируем API плагина
+    window.TVRefreshPlugin = {
+        version: PLUGIN_CONFIG.version,
+        refresh: performTVRefresh
+    };
                     
                     // Пробуем вызвать нативные методы
                     if (window.webkit && window.webkit.messageHandlers) {
