@@ -17,46 +17,31 @@
     // Create refresh button element
     function createRefreshButton() {
         const button = document.createElement('div');
-        button.className = 'refresh-button-plugin';
+        button.className = 'head__action selector refresh-button-plugin';
         button.innerHTML = `
-            <div class="refresh-button" title="Refresh Page" style="
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 40px;
-                height: 40px;
-                background: rgba(255, 255, 255, 0.1);
-                border-radius: 8px;
-                cursor: pointer;
-                margin-left: 10px;
-                transition: all 0.2s ease;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-            ">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white;">
-                    <path d="M23 4v6h-6"/>
-                    <path d="M1 20v-6h6"/>
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                </svg>
-            </div>
+            <svg width="25" height="23" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M23 4v6h-6" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M1 20v-6h6" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
         `;
         
         // Add hover effects
-        const refreshBtn = button.querySelector('.refresh-button');
-        refreshBtn.addEventListener('mouseenter', () => {
-            refreshBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-            refreshBtn.style.transform = 'scale(1.05)';
+        button.addEventListener('mouseenter', () => {
+            button.style.opacity = '0.8';
+            button.style.transform = 'scale(1.05)';
         });
         
-        refreshBtn.addEventListener('mouseleave', () => {
-            refreshBtn.style.background = 'rgba(255, 255, 255, 0.1)';
-            refreshBtn.style.transform = 'scale(1)';
+        button.addEventListener('mouseleave', () => {
+            button.style.opacity = '1';
+            button.style.transform = 'scale(1)';
         });
         
         // Add click functionality
-        refreshBtn.addEventListener('click', () => {
+        button.addEventListener('click', () => {
             // Add loading animation
-            refreshBtn.style.transform = 'rotate(360deg)';
-            refreshBtn.style.transition = 'transform 0.5s ease';
+            button.style.transform = 'rotate(360deg)';
+            button.style.transition = 'transform 0.5s ease';
             
             // Refresh the page after animation
             setTimeout(() => {
@@ -73,6 +58,7 @@
             // Try multiple selectors for the upper menu
             const menuSelectors = [
                 '.head__actions',
+                '.head__action',
                 '.header .menu',
                 '.top-menu',
                 '.upper-menu',
@@ -108,16 +94,8 @@
             // Create and inject the refresh button
             const refreshButton = createRefreshButton();
             
-            // Try to position it on the right side
-            if (targetMenu.style.display === 'flex' || getComputedStyle(targetMenu).display === 'flex') {
-                targetMenu.appendChild(refreshButton);
-            } else {
-                // If not flex, make it flex and add the button
-                targetMenu.style.display = 'flex';
-                targetMenu.style.alignItems = 'center';
-                targetMenu.style.justifyContent = 'space-between';
-                targetMenu.appendChild(refreshButton);
-            }
+            // Add the button to the menu
+            targetMenu.appendChild(refreshButton);
             
             console.log(`[${PLUGIN_CONFIG.name}] Refresh button injected successfully into ${selector}`);
             return true;
