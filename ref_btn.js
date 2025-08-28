@@ -1,194 +1,136 @@
-// Basic Refresh Button 17 - Максимально простая версия
-// Просто кнопка, которая перезагружает страницу
+// Basic Test Script - Проверяем работает ли JavaScript вообще 18
+// Простой тест для диагностики проблем
 
 (function() {
     'use strict';
     
-    console.log('🔄 Basic Refresh Button Starting...');
+    console.log('🧪 Basic Test Script Starting...');
     
-    // Создать простую кнопку
-    function createBasicButton() {
-        const button = document.createElement('button');
-        button.innerHTML = '🔄';
-        button.title = 'Refresh';
-        button.style.cssText = `
+    // Тест 1: Простой alert
+    try {
+        alert('JavaScript работает! Если видишь это сообщение - JS включен.');
+        console.log('✅ Alert работает');
+    } catch (e) {
+        console.error('❌ Alert не работает:', e);
+    }
+    
+    // Тест 2: Создать простой элемент
+    try {
+        const testDiv = document.createElement('div');
+        testDiv.innerHTML = 'TEST DIV';
+        testDiv.style.cssText = `
             position: fixed;
-            top: 50px;
-            right: 50px;
-            z-index: 999999;
-            background: #ff0000;
+            top: 200px;
+            left: 200px;
+            background: red;
             color: white;
-            width: 80px;
-            height: 80px;
-            border: none;
-            border-radius: 40px;
-            font-size: 40px;
-            cursor: pointer;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-            transition: all 0.3s ease;
+            padding: 20px;
+            font-size: 24px;
+            z-index: 999999;
         `;
         
-        // Клик - просто перезагрузить страницу
-        button.addEventListener('click', function() {
-            console.log('🔄 Button clicked - reloading page...');
-            
-            // Анимация
-            button.style.transform = 'rotate(360deg) scale(1.5)';
-            button.style.background = '#00ff00';
-            
-            // Перезагрузить через 500ms
-            setTimeout(function() {
-                try {
-                    // Способ 1: reload()
-                    window.location.reload();
-                } catch (e) {
-                    try {
-                        // Способ 2: href
-                        window.location.href = window.location.href;
-                    } catch (e2) {
-                        try {
-                            // Способ 3: replace
-                            window.location.replace(window.location.href);
-                        } catch (e3) {
-                            // Способ 4: history
-                            if (window.history && window.history.go) {
-                                window.history.go(0);
-                            }
-                        }
-                    }
+        document.body.appendChild(testDiv);
+        console.log('✅ Test div создан и добавлен');
+        
+        // Удалить через 5 секунд
+        setTimeout(() => {
+            if (testDiv.parentNode) {
+                testDiv.parentNode.removeChild(testDiv);
+                console.log('✅ Test div удален');
+            }
+        }, 5000);
+        
+    } catch (e) {
+        console.error('❌ Не удалось создать test div:', e);
+    }
+    
+    // Тест 3: Проверить Lampa
+    try {
+        if (typeof Lampa !== 'undefined') {
+            console.log('✅ Lampa доступна:', Lampa);
+            if (Lampa.Listener) {
+                console.log('✅ Lampa.Listener доступен');
+            } else {
+                console.log('❌ Lampa.Listener недоступен');
+            }
+        } else {
+            console.log('❌ Lampa недоступна');
+        }
+    } catch (e) {
+        console.error('❌ Ошибка при проверке Lampa:', e);
+    }
+    
+    // Тест 4: Проверить DOM элементы
+    try {
+        const selectors = [
+            '.head__actions',
+            '.head__action',
+            '.view--header',
+            '.view--navigation',
+            'body',
+            'html'
+        ];
+        
+        console.log('🔍 Проверяем DOM элементы:');
+        selectors.forEach(selector => {
+            try {
+                const element = document.querySelector(selector);
+                if (element) {
+                    console.log(`✅ Найден: ${selector}`);
+                    console.log('  - Tag:', element.tagName);
+                    console.log('  - Classes:', element.className);
+                    console.log('  - Children:', element.children.length);
+                } else {
+                    console.log(`❌ Не найден: ${selector}`);
                 }
-            }, 500);
-        });
-        
-        // Hover эффекты
-        button.addEventListener('mouseenter', function() {
-            button.style.transform = 'scale(1.2)';
-            button.style.background = '#cc0000';
-        });
-        
-        button.addEventListener('mouseleave', function() {
-            button.style.transform = 'scale(1)';
-            button.style.background = '#ff0000';
-        });
-        
-        return button;
-    }
-    
-    // Добавить кнопку на страницу
-    function addBasicButton() {
-        // Удалить существующую если есть
-        const existing = document.querySelector('.basic-refresh-btn');
-        if (existing) {
-            existing.remove();
-        }
-        
-        const button = createBasicButton();
-        button.className = 'basic-refresh-btn';
-        document.body.appendChild(button);
-        
-        console.log('✅ Basic refresh button added');
-    }
-    
-    // Попробовать добавить в меню Lampa
-    function tryAddToMenu() {
-        try {
-            const selectors = [
-                '.head__actions',
-                '.head__action',
-                '.view--header',
-                '.view--navigation'
-            ];
-            
-            for (const selector of selectors) {
-                const menu = document.querySelector(selector);
-                if (menu) {
-                    console.log('Found menu:', selector);
-                    
-                    // Проверить, нет ли уже кнопки
-                    if (menu.querySelector('.basic-refresh-btn')) {
-                        return;
-                    }
-                    
-                    // Создать кнопку для меню
-                    const menuButton = createBasicButton();
-                    menuButton.style.cssText = `
-                        background: #ff0000;
-                        color: white;
-                        width: 60px;
-                        height: 60px;
-                        border: none;
-                        border-radius: 30px;
-                        font-size: 30px;
-                        cursor: pointer;
-                        margin-left: 15px;
-                        transition: all 0.3s ease;
-                        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-                    `;
-                    
-                    menu.appendChild(menuButton);
-                    console.log('✅ Button added to menu:', selector);
-                    return;
-                }
-            }
-            
-            // Если меню не найдено, добавить плавающую кнопку
-            console.log('No menu found, adding floating button');
-            addBasicButton();
-            
-        } catch (e) {
-            console.error('Failed to add to menu:', e);
-            addBasicButton();
-        }
-    }
-    
-    // Инициализация
-    function init() {
-        console.log('Initializing basic refresh plugin...');
-        
-        // Попробовать сразу
-        tryAddToMenu();
-        
-        // Попробовать через задержки
-        setTimeout(tryAddToMenu, 1000);
-        setTimeout(tryAddToMenu, 3000);
-        setTimeout(tryAddToMenu, 5000);
-        setTimeout(tryAddToMenu, 10000);
-    }
-    
-    // Запустить
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-    
-    // Lampa события
-    if (typeof Lampa !== 'undefined' && Lampa.Listener) {
-        console.log('Lampa detected, adding listeners...');
-        
-        Lampa.Listener.follow('full', function(e) {
-            if (e.type === 'complite') {
-                setTimeout(tryAddToMenu, 300);
+            } catch (e) {
+                console.error(`❌ Ошибка при поиске ${selector}:`, e);
             }
         });
         
-        Lampa.Listener.follow('view', function(e) {
-            if (e.type === 'complite') {
-                setTimeout(tryAddToMenu, 300);
-            }
-        });
-        
-    } else {
-        console.log('Lampa not detected, using standalone mode');
+    } catch (e) {
+        console.error('❌ Ошибка при проверке DOM:', e);
     }
     
-    // Периодическая проверка
-    setInterval(function() {
-        if (!document.querySelector('.basic-refresh-btn')) {
-            tryAddToMenu();
-        }
-    }, 15000);
+    // Тест 5: Простая кнопка без сложной логики
+    try {
+        const simpleButton = document.createElement('button');
+        simpleButton.textContent = 'TEST BUTTON';
+        simpleButton.style.cssText = `
+            position: fixed;
+            top: 300px;
+            left: 200px;
+            background: blue;
+            color: white;
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            z-index: 999999;
+        `;
+        
+        // Простой обработчик
+        simpleButton.onclick = function() {
+            console.log('🎯 Test button clicked!');
+            this.style.background = 'green';
+            alert('Кнопка работает!');
+        };
+        
+        document.body.appendChild(simpleButton);
+        console.log('✅ Test button создан и добавлен');
+        
+        // Удалить через 10 секунд
+        setTimeout(() => {
+            if (simpleButton.parentNode) {
+                simpleButton.parentNode.removeChild(simpleButton);
+                console.log('✅ Test button удален');
+            }
+        }, 10000);
+        
+    } catch (e) {
+        console.error('❌ Не удалось создать test button:', e);
+    }
     
-    console.log('🔄 Basic Refresh Button Ready!');
+    console.log('🧪 Basic Test Script завершен. Проверь консоль для результатов.');
     
 })();
