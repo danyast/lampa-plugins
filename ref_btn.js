@@ -12,28 +12,43 @@
         
         // Обработчик клика
         $('#EXIT').on('hover:enter hover:click hover:touch', function() {
-            // Выход из приложения
-            Lampa.Activity.out();
-            
-            // Платформо-зависимый выход
-            if (Lampa.Platform.is('apple_tv')) {
-                window.location.assign('exit://exit');
-            }
-            if (Lampa.Platform.is('tizen')) {
-                tizen.application.getCurrentApplication().exit();
-            }
-            if (Lampa.Platform.is('webos')) {
-                window.close();
-            }
-            if (Lampa.Platform.is('android')) {
-                Lampa.Android.exit();
-            }
-            if (Lampa.Platform.is('orsay')) {
-                Lampa.Orsay.exit();
-            }
-            if (Lampa.Platform.is('nw')) {
-                nw.Window.get().close();
-            }
+            // Показываем модальное окно подтверждения
+            Lampa.Modal.open({
+                title: 'Выход из приложения',
+                html: '<div style="text-align: center; padding: 20px;">Вы уверены, что хотите выйти из приложения?</div>',
+                size: 'medium',
+                mask: true,
+                onBack: function() {
+                    Lampa.Modal.close();
+                },
+                onSelect: function() {
+                    // Подтверждено - выходим
+                    Lampa.Modal.close();
+                    
+                    // Выход из приложения
+                    Lampa.Activity.out();
+                    
+                    // Платформо-зависимый выход
+                    if (Lampa.Platform.is('apple_tv')) {
+                        window.location.assign('exit://exit');
+                    }
+                    if (Lampa.Platform.is('tizen')) {
+                        tizen.application.getCurrentApplication().exit();
+                    }
+                    if (Lampa.Platform.is('webos')) {
+                        window.close();
+                    }
+                    if (Lampa.Platform.is('android')) {
+                        Lampa.Android.exit();
+                    }
+                    if (Lampa.Platform.is('orsay')) {
+                        Lampa.Orsay.exit();
+                    }
+                    if (Lampa.Platform.is('nw')) {
+                        nw.Window.get().close();
+                    }
+                }
+            });
         });
         
         // Показываем кнопку
