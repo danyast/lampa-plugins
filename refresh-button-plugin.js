@@ -9,10 +9,90 @@
     // Plugin configuration
     const PLUGIN_CONFIG = {
         name: 'Refresh Button Plugin',
-        version: '1.0.0',
+        version: '1.0.1',
         author: 'Plugin Developer',
-        description: 'Adds a refresh button to the upper right menu'
+        description: 'Adds a refresh button to the upper right menu with TV app support'
     };
+    
+    // Enhanced refresh function that works in both browser and TV app
+    function performRefresh() {
+        console.log('[Refresh Button] Attempting to refresh page...');
+        
+        // Method 1: Standard reload
+        try {
+            window.location.reload();
+            return true;
+        } catch (e) {
+            console.log('[Refresh Button] Standard reload failed, trying alternatives...');
+        }
+        
+        // Method 2: Force reload
+        try {
+            window.location.reload(true);
+            return true;
+        } catch (e) {
+            console.log('[Refresh Button] Force reload failed, trying location.href...');
+        }
+        
+        // Method 3: Set location.href
+        try {
+            window.location.href = window.location.href;
+            return true;
+        } catch (e) {
+            console.log('[Refresh Button] Location.href failed, trying replace...');
+        }
+        
+        // Method 4: Replace current location
+        try {
+            window.location.replace(window.location.href);
+            return true;
+        } catch (e) {
+            console.log('[Refresh Button] Replace failed, trying history...');
+        }
+        
+        // Method 5: History API
+        try {
+            if (window.history && window.history.go) {
+                window.history.go(0);
+                return true;
+            }
+        } catch (e) {
+            console.log('[Refresh Button] History.go failed, trying events...');
+        }
+        
+        // Method 6: Dispatch events (for TV apps)
+        try {
+            window.dispatchEvent(new Event('beforeunload'));
+            window.dispatchEvent(new Event('unload'));
+            window.dispatchEvent(new Event('load'));
+            return true;
+        } catch (e) {
+            console.log('[Refresh Button] Events failed, trying Lampa API...');
+        }
+        
+        // Method 7: Try Lampa-specific refresh if available
+        try {
+            if (typeof Lampa !== 'undefined' && Lampa.Listener) {
+                // Trigger a navigation event to refresh the view
+                Lampa.Listener.follow('navigate', function() {
+                    console.log('[Refresh Button] Lampa navigation triggered');
+                });
+                return true;
+            }
+        } catch (e) {
+            console.log('[Refresh Button] Lampa API failed');
+        }
+        
+        // Method 8: Final fallback - reload the entire page content
+        try {
+            document.body.innerHTML = '';
+            document.location.reload();
+            return true;
+        } catch (e) {
+            console.error('[Refresh Button] All refresh methods failed:', e);
+            return false;
+        }
+    }
     
     // Create refresh button element
     function createRefreshButton() {
@@ -43,9 +123,25 @@
             button.style.transform = 'rotate(360deg)';
             button.style.transition = 'transform 0.5s ease';
             
-            // Refresh the page after animation
+            // Try to refresh after animation
             setTimeout(() => {
-                window.location.reload();
+                const success = performRefresh();
+                if (!success) {
+                    // Show error message if all methods failed
+                    button.style.background = 'rgba(255, 0, 0, 0.3)';
+                    setTimeout(() => {
+                        button.style.background = '';
+                    }, 2000);
+                    
+                    // Try to show alert or notification
+                    try {
+                        if (typeof alert !== 'undefined') {
+                            alert('Не удалось обновить страницу. Попробуйте перезапустить приложение.');
+                        }
+                    } catch (e) {
+                        console.error('Cannot show alert:', e);
+                    }
+                }
             }, 500);
         });
         
