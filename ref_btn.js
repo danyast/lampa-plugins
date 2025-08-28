@@ -1,24 +1,21 @@
+//v2
 (function(){
     function ReloadButtonPlugin(){
         this.run = function(){
-            // Ждём, пока загрузится интерфейс
-            const waitForHeader = setInterval(() => {
-                const header = document.querySelector('.head');
+            const wait = setInterval(() => {
+                const header = document.querySelector('.head .head-actions');
                 if(header){
-                    clearInterval(waitForHeader);
+                    clearInterval(wait);
 
-                    // Создаём кнопку
                     const btn = document.createElement('div');
-                    btn.classList.add('head-action');
+                    btn.className = 'head-action';
                     btn.innerHTML = '<i class="icon icon-refresh"></i><span>Обновить</span>';
                     btn.style.cursor = 'pointer';
 
-                    // Обработчик нажатия
                     btn.addEventListener('click', () => {
-                        location.reload();
+                        window.location.reload();
                     });
 
-                    // Добавляем в шапку
                     header.appendChild(btn);
                 }
             }, 500);
