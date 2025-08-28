@@ -1,103 +1,151 @@
 /**
- * Lampa TV Refresh Button Plugin
- * Adds a refresh button to the upper right menu
+ * Lampa TV Refresh Button Plugin - TV App Version
+ * Specialized for Android TV applications
  */
 
 (function() {
     'use strict';
     
-    // Plugin configuration
     const PLUGIN_CONFIG = {
-        name: 'Refresh Button Plugin',
-        version: '1.0.1',
+        name: 'TV Refresh Button Plugin',
+        version: '1.0.0',
         author: 'Plugin Developer',
-        description: 'Adds a refresh button to the upper right menu with TV app support'
+        description: 'TV app optimized refresh button'
     };
     
-    // Enhanced refresh function that works in both browser and TV app
-    function performRefresh() {
-        console.log('[Refresh Button] Attempting to refresh page...');
+    // TV-specific refresh methods
+    function performTVRefresh() {
+        console.log('[TV Refresh] Attempting TV-specific refresh...');
         
-        // Method 1: Standard reload
+        // Method 1: Try to trigger Lampa view refresh
         try {
-            window.location.reload();
-            return true;
-        } catch (e) {
-            console.log('[Refresh Button] Standard reload failed, trying alternatives...');
-        }
-        
-        // Method 2: Force reload
-        try {
-            window.location.reload(true);
-            return true;
-        } catch (e) {
-            console.log('[Refresh Button] Force reload failed, trying location.href...');
-        }
-        
-        // Method 3: Set location.href
-        try {
-            window.location.href = window.location.href;
-            return true;
-        } catch (e) {
-            console.log('[Refresh Button] Location.href failed, trying replace...');
-        }
-        
-        // Method 4: Replace current location
-        try {
-            window.location.replace(window.location.href);
-            return true;
-        } catch (e) {
-            console.log('[Refresh Button] Replace failed, trying history...');
-        }
-        
-        // Method 5: History API
-        try {
-            if (window.history && window.history.go) {
-                window.history.go(0);
+            if (typeof Lampa !== 'undefined' && Lampa.Listener) {
+                console.log('[TV Refresh] Using Lampa API...');
+                
+                // Force a view refresh by triggering navigation
+                Lampa.Listener.follow('view', function(e) {
+                    if (e.type === 'complite') {
+                        console.log('[TV Refresh] View refreshed via Lampa');
+                    }
+                });
+                
+                // Try to refresh current view
+                if (Lampa.Listener.emit) {
+                    Lampa.Listener.emit('view', { type: 'refresh' });
+                }
+                
                 return true;
             }
         } catch (e) {
-            console.log('[Refresh Button] History.go failed, trying events...');
+            console.log('[TV Refresh] Lampa API failed:', e);
         }
         
-        // Method 6: Dispatch events (for TV apps)
+        // Method 2: Try Android TV specific methods
         try {
-            window.dispatchEvent(new Event('beforeunload'));
-            window.dispatchEvent(new Event('unload'));
-            window.dispatchEvent(new Event('load'));
-            return true;
+            if (window.Android && window.Android.reload) {
+                console.log('[TV Refresh] Using Android.reload()');
+                window.Android.reload();
+                return true;
+            }
         } catch (e) {
-            console.log('[Refresh Button] Events failed, trying Lampa API...');
+            console.log('[TV Refresh] Android.reload failed:', e);
         }
         
-        // Method 7: Try Lampa-specific refresh if available
+        // Method 3: Try to reload via iframe if available
         try {
-            if (typeof Lampa !== 'undefined' && Lampa.Listener) {
-                // Trigger a navigation event to refresh the view
-                Lampa.Listener.follow('navigate', function() {
-                    console.log('[Refresh Button] Lampa navigation triggered');
+            const iframes = document.querySelectorAll('iframe');
+            if (iframes.length > 0) {
+                console.log('[TV Refresh] Reloading iframes...');
+                iframes.forEach(iframe => {
+                    if (iframe.src) {
+                        iframe.src = iframe.src;
+                    }
                 });
                 return true;
             }
         } catch (e) {
-            console.log('[Refresh Button] Lampa API failed');
+            console.log('[TV Refresh] Iframe reload failed:', e);
         }
         
-        // Method 8: Final fallback - reload the entire page content
+        // Method 4: Try to refresh via location hash
         try {
-            document.body.innerHTML = '';
-            document.location.reload();
+            const currentHash = window.location.hash;
+            if (currentHash) {
+                console.log('[TV Refresh] Refreshing via hash change...');
+                window.location.hash = '';
+                setTimeout(() => {
+                    window.location.hash = currentHash;
+                }, 100);
+                return true;
+            }
+        } catch (e) {
+            console.log('[TV Refresh] Hash refresh failed:', e);
+        }
+        
+        // Method 5: Try to force DOM refresh
+        try {
+            console.log('[TV Refresh] Forcing DOM refresh...');
+            
+            // Remove and re-add body content
+            const body = document.body;
+            const originalContent = body.innerHTML;
+            
+            body.innerHTML = '';
+            setTimeout(() => {
+                body.innerHTML = originalContent;
+                console.log('[TV Refresh] DOM refreshed');
+            }, 100);
+            
             return true;
         } catch (e) {
-            console.error('[Refresh Button] All refresh methods failed:', e);
+            console.log('[TV Refresh] DOM refresh failed:', e);
+        }
+        
+        // Method 6: Try to use postMessage for refresh
+        try {
+            console.log('[TV Refresh] Using postMessage...');
+            window.postMessage({ type: 'REFRESH_PAGE' }, '*');
+            return true;
+        } catch (e) {
+            console.log('[TV Refresh] PostMessage failed:', e);
+        }
+        
+        // Method 7: Try to dispatch custom refresh event
+        try {
+            console.log('[TV Refresh] Dispatching custom event...');
+            const refreshEvent = new CustomEvent('tvRefresh', { 
+                detail: { timestamp: Date.now() } 
+            });
+            window.dispatchEvent(refreshEvent);
+            return true;
+        } catch (e) {
+            console.log('[TV Refresh] Custom event failed:', e);
+        }
+        
+        // Method 8: Final fallback - try to restart the app view
+        try {
+            console.log('[TV Refresh] Trying app restart...');
+            
+            // Clear all intervals and timeouts
+            const highestTimeoutId = setTimeout(";");
+            for (let i = 0; i < highestTimeoutId; i++) {
+                clearTimeout(i);
+                clearInterval(i);
+            }
+            
+            // Force a complete page reload
+            document.location.href = document.location.href;
+            return true;
+        } catch (e) {
+            console.error('[TV Refresh] All methods failed:', e);
             return false;
         }
     }
     
-    // Create refresh button element
-    function createRefreshButton() {
+    // Create TV-optimized button
+    function createTVButton() {
         const button = document.createElement('div');
-        button.className = 'head__action selector refresh-button-plugin';
+        button.className = 'head__action selector tv-refresh-button';
         button.innerHTML = `
             <svg width="25" height="23" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M23 4v6h-6" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -106,189 +154,195 @@
             </svg>
         `;
         
-        // Add hover effects
+        // Add TV-specific hover effects
         button.addEventListener('mouseenter', () => {
             button.style.opacity = '0.8';
-            button.style.transform = 'scale(1.05)';
+            button.style.transform = 'scale(1.1)';
+            button.style.filter = 'brightness(1.2)';
         });
         
         button.addEventListener('mouseleave', () => {
             button.style.opacity = '1';
             button.style.transform = 'scale(1)';
+            button.style.filter = 'brightness(1)';
         });
         
-        // Add click functionality
+        // Add click functionality with visual feedback
         button.addEventListener('click', () => {
-            // Add loading animation
-            button.style.transform = 'rotate(360deg)';
-            button.style.transition = 'transform 0.5s ease';
+            console.log('[TV Refresh] Button clicked, starting refresh sequence...');
             
-            // Try to refresh after animation
+            // Visual feedback
+            button.style.transform = 'rotate(360deg) scale(1.2)';
+            button.style.transition = 'all 0.8s ease';
+            button.style.filter = 'brightness(1.5)';
+            
+            // Try to refresh
             setTimeout(() => {
-                const success = performRefresh();
-                if (!success) {
-                    // Show error message if all methods failed
-                    button.style.background = 'rgba(255, 0, 0, 0.3)';
-                    setTimeout(() => {
-                        button.style.background = '';
-                    }, 2000);
+                const success = performTVRefresh();
+                
+                if (success) {
+                    // Success feedback
+                    button.style.background = 'rgba(0, 255, 0, 0.3)';
+                    button.style.filter = 'brightness(1.3)';
+                    console.log('[TV Refresh] Refresh initiated successfully');
+                } else {
+                    // Error feedback
+                    button.style.background = 'rgba(255, 0, 0, 0.5)';
+                    button.style.filter = 'brightness(0.8)';
+                    console.error('[TV Refresh] All refresh methods failed');
                     
-                    // Try to show alert or notification
+                    // Show error message
                     try {
                         if (typeof alert !== 'undefined') {
-                            alert('Не удалось обновить страницу. Попробуйте перезапустить приложение.');
+                            alert('Обновление не удалось. Попробуйте перезапустить приложение.');
                         }
                     } catch (e) {
                         console.error('Cannot show alert:', e);
                     }
                 }
-            }, 500);
+                
+                // Reset button state after delay
+                setTimeout(() => {
+                    button.style.background = '';
+                    button.style.filter = 'brightness(1)';
+                    button.style.transform = 'scale(1)';
+                }, 2000);
+            }, 800);
         });
         
         return button;
     }
     
-    // Find and inject the refresh button
-    function injectRefreshButton() {
+    // Inject button into TV interface
+    function injectTVButton() {
         try {
-            // Try multiple selectors for the upper menu
-            const menuSelectors = [
+            const selectors = [
                 '.head__actions',
                 '.head__action',
-                '.header .menu',
-                '.top-menu',
-                '.upper-menu',
-                '.navigation',
-                '.header',
-                '.top-bar',
-                '.menu-container',
                 '.view--header',
                 '.view--navigation'
             ];
             
-            let targetMenu = null;
+            let target = null;
             let selector = '';
             
-            for (const sel of menuSelectors) {
+            for (const sel of selectors) {
                 const element = document.querySelector(sel);
                 if (element) {
-                    targetMenu = element;
+                    target = element;
                     selector = sel;
                     break;
                 }
             }
             
-            if (!targetMenu) {
-                return false; // Menu not found
+            if (!target) {
+                console.log('[TV Refresh] No target found, using fallback');
+                return injectFallbackButton();
             }
             
-            // Check if button already exists
-            if (targetMenu.querySelector('.refresh-button-plugin')) {
-                return true; // Button already exists
+            if (target.querySelector('.tv-refresh-button')) {
+                return true;
             }
             
-            // Create and inject the refresh button
-            const refreshButton = createRefreshButton();
+            const button = createTVButton();
+            target.appendChild(button);
             
-            // Add the button to the menu
-            targetMenu.appendChild(refreshButton);
-            
-            console.log(`[${PLUGIN_CONFIG.name}] Refresh button injected successfully into ${selector}`);
+            console.log(`[${PLUGIN_CONFIG.name}] TV button injected into ${selector}`);
             return true;
             
         } catch (error) {
-            console.error(`[${PLUGIN_CONFIG.name}] Failed to inject refresh button:`, error);
+            console.error('[TV Refresh] Injection failed:', error);
+            return injectFallbackButton();
+        }
+    }
+    
+    // Fallback injection
+    function injectFallbackButton() {
+        try {
+            const existingButton = document.querySelector('.tv-refresh-button');
+            if (existingButton) return;
+            
+            const button = createTVButton();
+            button.style.cssText = `
+                position: fixed;
+                top: 30px;
+                right: 30px;
+                z-index: 9999;
+                background: rgba(0, 0, 0, 0.9);
+                border-radius: 10px;
+                padding: 15px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            `;
+            
+            document.body.appendChild(button);
+            console.log('[TV Refresh] Fallback button injected');
+            return true;
+            
+        } catch (error) {
+            console.error('[TV Refresh] Fallback failed:', error);
             return false;
         }
     }
     
-    // Fallback injection method
-    function injectFallbackButton() {
-        try {
-            const existingButton = document.querySelector('.refresh-button-plugin');
-            if (existingButton) return;
-            
-            const refreshButton = createRefreshButton();
-            refreshButton.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 9999;
-                background: rgba(0, 0, 0, 0.8);
-                border-radius: 8px;
-                padding: 10px;
-            `;
-            
-            document.body.appendChild(refreshButton);
-            console.log(`[${PLUGIN_CONFIG.name}] Fallback refresh button injected`);
-            
-        } catch (error) {
-            console.error(`[${PLUGIN_CONFIG.name}] Fallback injection failed:`, error);
-        }
-    }
-    
-    // Initialize plugin
-    function initPlugin() {
-        console.log(`[${PLUGIN_CONFIG.name}] Initializing plugin v${PLUGIN_CONFIG.version}`);
+    // Initialize TV plugin
+    function initTVPlugin() {
+        console.log(`[${PLUGIN_CONFIG.name}] Initializing TV plugin...`);
         
-        // Try to inject immediately
-        if (!injectRefreshButton()) {
-            // If failed, try fallback
-            setTimeout(injectFallbackButton, 1000);
-        }
-    }
-    
-    // Listen for Lampa events
-    if (typeof Lampa !== 'undefined' && Lampa.Listener) {
-        // Listen for full view completion
-        Lampa.Listener.follow('full', function(e) {
-            if (e.type === 'complite') {
-                // Wait a bit for DOM to be ready
-                setTimeout(() => {
-                    injectRefreshButton();
-                }, 100);
-            }
-        });
-        
-        // Listen for other view changes
-        Lampa.Listener.follow('view', function(e) {
-            if (e.type === 'complite') {
-                setTimeout(() => {
-                    injectRefreshButton();
-                }, 100);
-            }
-        });
-        
-        // Listen for navigation
-        Lampa.Listener.follow('navigate', function(e) {
-            setTimeout(() => {
-                injectRefreshButton();
-            }, 200);
-        });
-        
-        console.log(`[${PLUGIN_CONFIG.name}] Lampa listeners attached successfully`);
-        
-    } else {
-        // Fallback for when Lampa is not available
-        console.log(`[${PLUGIN_CONFIG.name}] Lampa not available, using fallback initialization`);
-        
-        // Try to initialize when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initPlugin);
-        } else {
-            initPlugin();
+        // Try immediate injection
+        if (!injectTVButton()) {
+            setTimeout(injectTVButton, 1000);
         }
         
         // Also try after delays
-        setTimeout(initPlugin, 1000);
-        setTimeout(initPlugin, 3000);
+        setTimeout(injectTVButton, 2000);
+        setTimeout(injectTVButton, 5000);
     }
     
-    // Also try to inject periodically as a backup
-    setInterval(() => {
-        if (!document.querySelector('.refresh-button-plugin')) {
-            injectRefreshButton();
+    // Listen for TV-specific events
+    if (typeof Lampa !== 'undefined' && Lampa.Listener) {
+        Lampa.Listener.follow('full', function(e) {
+            if (e.type === 'complite') {
+                setTimeout(injectTVButton, 200);
+            }
+        });
+        
+        Lampa.Listener.follow('view', function(e) {
+            if (e.type === 'complite') {
+                setTimeout(injectTVButton, 200);
+            }
+        });
+        
+        console.log('[TV Refresh] Lampa listeners attached');
+        
+    } else {
+        console.log('[TV Refresh] Lampa not available, using fallback');
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTVPlugin);
+        } else {
+            initTVPlugin();
         }
-    }, 5000);
+    }
+    
+    // Periodic injection check
+    setInterval(() => {
+        if (!document.querySelector('.tv-refresh-button')) {
+            injectTVButton();
+        }
+    }, 10000);
+    
+    // Listen for postMessage refresh requests
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'REFRESH_PAGE') {
+            console.log('[TV Refresh] Received refresh request via postMessage');
+            performTVRefresh();
+        }
+    });
+    
+    // Listen for custom refresh events
+    window.addEventListener('tvRefresh', function(event) {
+        console.log('[TV Refresh] Received custom refresh event');
+        performTVRefresh();
+    });
     
 })();
