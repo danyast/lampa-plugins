@@ -42,11 +42,11 @@
     
     // Если всё готово
     if(window.appready) {
-        add();
+        setTimeout(add, 2000); // Задержка 2 секунды
     } else {
         Lampa.Listener.follow('app', function(e) {
             if(e.type == 'ready') {
-                add();
+                setTimeout(add, 100); // Задержка 2 секунды
             }
         });
     }
