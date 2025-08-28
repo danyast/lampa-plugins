@@ -1,112 +1,42 @@
-// Top Menu Only Refresh - ТОЛЬКО в верхнем меню 6
+// Working Refresh Button - Рабочая реализация 1
 (function () {
     "use strict";
     
-    // Функция добавления в верхнее меню
-    function addToTopMenu() {
-        // Ищем верхнее меню
-        var topMenu = document.querySelector('.head__actions');
-        
-        if (!topMenu) {
-            console.log('❌ Верхнее меню не найдено');
-            return false;
-        }
-        
-        // Проверяем, нет ли уже кнопки
-        if (topMenu.querySelector('.refresh-top-btn')) {
-            console.log('✅ Кнопка уже добавлена');
-            return true;
-        }
-        
-        // Создаем кнопку для верхнего меню
-        var button = document.createElement('div');
-        button.className = 'head__action selector refresh-top-btn';
-        button.innerHTML = '🔄';
-        button.title = 'Обновить';
+    // Функция добавления
+    function add() {
+        // Кнопка Перезагрузки
+        var my_reload = '<div id="RELOAD" class="head__action selector" style="margin-left: 10px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M23 4v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 20v-6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
         
         // Добавляем в верхнее меню
-        topMenu.appendChild(button);
+        $('#app > div.head > div > div.head__actions').append(my_reload);
         
         // Обработчик клика
-        button.onclick = function() {
-            // Анимация
-            button.style.transform = 'scale(1.2) rotate(360deg)';
-            button.style.opacity = '0.7';
+        $('#RELOAD').on('hover:enter hover:click hover:touch', function() {
+            // Попробовать Lampa API
+            try {
+                if (typeof Lampa !== 'undefined' && Lampa.Listener && Lampa.Listener.emit) {
+                    Lampa.Listener.emit('view', { type: 'refresh' });
+                    return;
+                }
+            } catch (e) {}
             
-            // Обновление через 300ms
-            setTimeout(function() {
-                performRefresh();
-            }, 300);
-            
-            // Сброс анимации через 1 секунду
-            setTimeout(function() {
-                button.style.transform = 'scale(1)';
-                button.style.opacity = '1';
-            }, 1000);
-        };
+            // Fallback: page reload
+            location.reload();
+        });
         
-        console.log('✅ Кнопка добавлена в верхнее меню');
-        return true;
+        // Показываем кнопку
+        $('#RELOAD').removeClass('hide');
     }
     
-    // Функция обновления
-    function performRefresh() {
-        // Метод 1: Lampa view refresh
-        try {
-            if (typeof Lampa !== 'undefined' && Lampa.Listener && Lampa.Listener.emit) {
-                Lampa.Listener.emit('view', { type: 'refresh' });
-                return;
+    // Если всё готово
+    if(window.appready) {
+        add();
+    } else {
+        Lampa.Listener.follow('app', function(e) {
+            if(e.type == 'ready') {
+                add();
             }
-        } catch (e) {}
-        
-        // Метод 2: Lampa navigation refresh
-        try {
-            if (typeof Lampa !== 'undefined' && Lampa.Listener && Lampa.Listener.emit) {
-                Lampa.Listener.emit('navigate', { type: 'refresh' });
-                return;
-            }
-        } catch (e) {}
-        
-        // Метод 3: Lampa full refresh
-        try {
-            if (typeof Lampa !== 'undefined' && Lampa.Listener && Lampa.Listener.emit) {
-                Lampa.Listener.emit('full', { type: 'refresh' });
-                return;
-            }
-        } catch (e) {}
-        
-        // Fallback: page reload
-        try {
-            if (window.location && window.location.reload) {
-                window.location.reload();
-            }
-        } catch (e) {}
+        });
     }
-    
-    // Функция инициализации
-    function init() {
-        // Ждем загрузки DOM
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(addToTopMenu, 1000);
-            });
-        } else {
-            setTimeout(addToTopMenu, 1000);
-        }
-        
-        // Дополнительные попытки
-        setTimeout(addToTopMenu, 3000);
-        setTimeout(addToTopMenu, 5000);
-        
-        // Периодическая проверка каждые 15 секунд
-        setInterval(function() {
-            if (!document.querySelector('.refresh-top-btn')) {
-                addToTopMenu();
-            }
-        }, 15000);
-    }
-    
-    // Запускаем
-    init();
     
 })();
