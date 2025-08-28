@@ -1,57 +1,48 @@
-//v4
-(function(){
-    function createButton(){
-        const btn = document.createElement('div');
-        btn.className = 'head-action tv-refresh-button selector';
-        btn.innerHTML = '<i class="icon icon-refresh"></i><span>Обновить</span>';
-        btn.style.cursor = 'pointer';
-
-        btn.addEventListener('click', () => {
-            console.log('[TV Refresh] Нажали кнопку — обновляем экран');
-            try {
-                if (typeof Lampa !== 'undefined' && Lampa.Activity) {
-                    let current = Lampa.Activity.active();
-                    if (current) {
-                        Lampa.Activity.replace(current.activity, current.object);
-                        return;
-                    }
+//v5
+function r(){
+    console.log('[TV Refresh] Starting refresh...');
+    try {
+        if (typeof Lampa !== 'undefined') {
+            // 1. Мягкое обновление через активити
+            if (Lampa.Activity && Lampa.Activity.active) {
+                let current = Lampa.Activity.active();
+                if (current) {
+                    console.log('[TV Refresh] Using Lampa.Activity.replace');
+                    Lampa.Activity.replace(current.activity, current.object);
+                    return true;
                 }
-                window.location.reload();
-            } catch(e) {
-                console.error(e);
-                window.location.reload();
             }
-        });
-
-        return btn;
+            // 2. Через стандартный эвент (если кто-то его слушает)
+            if (Lampa.Listener && Lampa.Listener.emit) {
+                console.log('[TV Refresh] Emitting view refresh event');
+                Lampa.Listener.emit('view', { type: 'refresh' });
+                return true;
+            }
+        }
+    } catch (e) {
+        console.warn('[TV Refresh] Lampa API refresh failed:', e);
     }
 
-    function injectButton(){
-        const selectors = ['.head__actions', '.head .head-actions', '.view--header', '.view--navigation'];
-        let container = null;
-
-        for (const sel of selectors){
-            const el = document.querySelector(sel);
-            if (el) { container = el; break; }
+    // 3. Android API
+    try {
+        if (window.Android && window.Android.reload) {
+            console.log('[TV Refresh] Using Android.reload()');
+            window.Android.reload();
+            return true;
         }
+    } catch (e) {
+        console.warn('[TV Refresh] Android.reload failed:', e);
+    }
 
-        if (!container) return false;
-        if (container.querySelector('.tv-refresh-button')) return true;
-
-        container.appendChild(createButton());
-        console.log('[TV Refresh] Кнопка вставлена в', container);
+    // 4. Жёсткая перезагрузка
+    try {
+        console.log('[TV Refresh] Using location.reload()');
+        location.reload();
         return true;
+    } catch (e) {
+        console.error('[TV Refresh] location.reload failed:', e);
     }
 
-    // пробуем вставить сразу и потом через интервалы
-    const tryInject = setInterval(() => {
-        if (injectButton()) {
-            clearInterval(tryInject);
-        }
-    }, 500);
-
-    // на случай, если шапка перерисовалась
-    setInterval(() => {
-        injectButton();
-    }, 5000);
-})();
+    console.error('[TV Refresh] All refresh methods failed');
+    return false;
+}
