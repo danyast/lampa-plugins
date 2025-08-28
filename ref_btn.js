@@ -1,195 +1,94 @@
-/**
- * Lampa TV Auto Refresh Button 20
- * Автоматически добавляет кнопку обновления в интерфейс
- * Работает в TV приложениях без консоли
- */
+// Main Menu Refresh 1
+(function () {
+    "use strict";
 
-(function() {
-    'use strict';
-    
-    // Функция обновления
-    function refreshLampa() {
-        try {
-            // Метод 1: Lampa API
-            if (Lampa && Lampa.Listener && Lampa.Listener.emit) {
-                Lampa.Listener.emit('view', { type: 'refresh' });
-                return true;
-            }
-        } catch (e) {}
-        
-        try {
-            // Метод 2: Page reload
-            if (window.location && window.location.reload) {
-                window.location.reload();
-                return true;
-            }
-        } catch (e) {}
-        
-        return false;
-    }
-    
-    // Создать кнопку обновления
-    function createRefreshButton() {
-        const button = document.createElement('div');
-        button.innerHTML = '🔄';
-        button.className = 'lampa-refresh-btn';
-        button.title = 'Обновить';
-        
-        // Стили кнопки
-        button.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 999999;
-            background: #ff6b6b;
-            color: white;
-            width: 50px;
-            height: 50px;
-            border-radius: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            transition: all 0.3s ease;
-            border: 2px solid #ff5252;
-        `;
-        
-        // Hover эффекты
-        button.addEventListener('mouseenter', () => {
-            button.style.transform = 'scale(1.1)';
-            button.style.background = '#ff5252';
-        });
-        
-        button.addEventListener('mouseleave', () => {
-            button.style.transform = 'scale(1)';
-            button.style.background = '#ff6b6b';
-        });
-        
-        // Клик
-        button.addEventListener('click', () => {
-            // Анимация
-            button.style.transform = 'rotate(360deg) scale(1.2)';
-            button.style.background = '#4caf50';
-            
-            // Обновление
-            setTimeout(() => {
-                refreshLampa();
-            }, 300);
-        });
-        
-        return button;
-    }
-    
-    // Добавить кнопку в интерфейс
-    function addButtonToInterface() {
-        try {
-            // Удалить существующую кнопку
-            const existing = document.querySelector('.lampa-refresh-btn');
-            if (existing) {
-                existing.remove();
-            }
-            
-            // Создать и добавить новую кнопку
-            const button = createRefreshButton();
-            document.body.appendChild(button);
-            
-            return true;
-        } catch (e) {
-            return false;
+    Lampa.Lang.add({
+        refresh_menu: {
+            ru: "Обновить",
+            en: "Refresh",
+            uk: "Оновити",
+            be: "Абнавіць",
+            zh: "刷新",
+            pt: "Atualizar",
+            bg: "Обнови"
         }
+    });
+
+    function refresh_m(object) {
+        this.create = function () { };
+        this.build = function () { };
+        this.start = function () { };
+        this.pause = function () { };
+        this.stop = function () { };
+        this.render = function () { };
+        this.destroy = function () { };
     }
-    
-    // Попробовать добавить в меню Lampa
-    function tryAddToMenu() {
-        try {
-            const selectors = [
-                '.head__actions',
-                '.head__action',
-                '.view--header',
-                '.view--navigation'
-            ];
+
+    function add() {
+        var ico = '<svg version="1.1" id="refresh" color="#fff" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve"><g><path fill="currentColor" d="M256,5.1c138.6,0,250.9,112.3,250.9,250.9S394.6,506.9,256,506.9S5.1,394.6,5.1,256S117.4,5.1,256,5.1z M256,40.1C136.7,40.1,40.1,136.7,40.1,256S136.7,471.9,256,471.9S471.9,375.3,471.9,256S375.3,40.1,256,40.1z M256,128c-70.7,0-128,57.3-128,128s57.3,128,128,128s128-57.3,128-128S326.7,128,256,128z M256,384c-70.7,0-128-57.3-128-128s57.3-128,128-128s128,57.3,128,128S326.7,384,256,384z"/><path fill="currentColor" d="M256,160c-53,0-96,43-96,96s43,96,96,96s96-43,96-96S309,160,256,160z M256,320c-35.3,0-64-28.7-64-64s28.7-64,64-64s64,28.7,64,64S291.3,320,256,320z"/><path fill="currentColor" d="M256,192c-35.3,0-64,28.7-64,64s28.7,64,64,64s64-28.7,64-64S291.3,192,256,192z M256,288c-17.7,0-32-14.3-32-32s14.3-32,32-32s32,14.3,32,32S273.7,288,256,288z"/></g></svg>';
+        
+        var menu_items = $(
+            '<li class="menu__item selector" data-action="refresh_r"><div class="menu__ico">' +
+            ico +
+            '</div><div class="menu__text">' +
+            Lampa.Lang.translate("refresh_menu") +
+            "</div></li>"
+        );
+
+        menu_items.on("hover:enter", function () {
+            // Анимация кнопки
+            $(this).addClass('active');
             
-            for (const selector of selectors) {
-                const menu = document.querySelector(selector);
-                if (menu) {
-                    // Проверить, нет ли уже кнопки
-                    if (menu.querySelector('.lampa-refresh-btn')) {
-                        return true;
-                    }
-                    
-                    // Создать кнопку для меню
-                    const menuButton = createRefreshButton();
-                    menuButton.style.cssText = `
-                        background: #ff6b6b;
-                        color: white;
-                        width: 40px;
-                        height: 40px;
-                        border-radius: 20px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 20px;
-                        cursor: pointer;
-                        margin-left: 10px;
-                        transition: all 0.3s ease;
-                        border: 2px solid #ff5252;
-                    `;
-                    
-                    menu.appendChild(menuButton);
-                    return true;
+            // Попробовать обновить через Lampa API
+            try {
+                if (Lampa.Listener && Lampa.Listener.emit) {
+                    Lampa.Listener.emit('view', { type: 'refresh' });
                 }
-            }
+            } catch (e) {}
             
-            // Если меню не найдено, добавить плавающую кнопку
-            return addButtonToInterface();
+            // Попробовать обновить через navigation
+            try {
+                if (Lampa.Listener && Lampa.Listener.emit) {
+                    Lampa.Listener.emit('navigate', { type: 'refresh' });
+                }
+            } catch (e) {}
             
-        } catch (e) {
-            return addButtonToInterface();
-        }
-    }
-    
-    // Инициализация
-    function init() {
-        // Попробовать сразу
-        if (!tryAddToMenu()) {
-            setTimeout(tryAddToMenu, 1000);
-        }
-        
-        // Попробовать через задержки
-        setTimeout(tryAddToMenu, 2000);
-        setTimeout(tryAddToMenu, 5000);
-        setTimeout(tryAddToMenu, 10000);
-    }
-    
-    // Запустить
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-    
-    // Lampa события
-    if (typeof Lampa !== 'undefined' && Lampa.Listener) {
-        Lampa.Listener.follow('full', function(e) {
-            if (e.type === 'complite') {
-                setTimeout(tryAddToMenu, 200);
-            }
+            // Попробовать обновить через full event
+            try {
+                if (Lampa.Listener && Lampa.Listener.emit) {
+                    Lampa.Listener.emit('full', { type: 'refresh' });
+                }
+            } catch (e) {}
+            
+            // Fallback: попробовать обновить страницу
+            try {
+                if (window.location && window.location.reload) {
+                    window.location.reload();
+                }
+            } catch (e) {}
+            
+            // Убрать активное состояние через 1 секунду
+            setTimeout(function() {
+                $(this).removeClass('active');
+            }.bind(this), 1000);
         });
-        
-        Lampa.Listener.follow('view', function(e) {
-            if (e.type === 'complite') {
-                setTimeout(tryAddToMenu, 200);
-            }
-        });
+
+        // Добавить в боковое меню
+        $(".menu .menu__list").eq(1).append(menu_items);
     }
-    
-    // Периодическая проверка
-    setInterval(() => {
-        if (!document.querySelector('.lampa-refresh-btn')) {
-            tryAddToMenu();
+
+    function createRefreshMenu() {
+        window.plugin_refresh_m_ready = true;
+        Lampa.Component.add("refresh_m", refresh_m);
+        
+        if (window.appready) {
+            add();
+        } else {
+            Lampa.Listener.follow("app", function (e) {
+                if (e.type == "ready") add();
+            });
         }
-    }, 15000);
-    
+    }
+
+    if (!window.plugin_refresh_m_ready) createRefreshMenu();
 })();
