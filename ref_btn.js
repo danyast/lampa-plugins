@@ -1,4 +1,4 @@
-// Top Menu Refresh Button 2.0
+// Top Menu Refresh - Exact Copy of Exit Plugin Structure 3.0
 (function () {
     "use strict";
 
@@ -24,126 +24,25 @@
         this.destroy = function () { };
     }
 
-    function addToTopMenu() {
-        // Иконка обновления
-        var ico = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M23 4v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 20v-6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    function add() {
+        var ico = '🔄';
         
-        // Создаем кнопку для верхнего меню
+        // Создаем кнопку для верхнего меню (точно как в exit плагине)
         var topButton = $(
             '<div class="head__action selector refresh-top-btn" data-action="refresh_top">' +
             ico +
             '</div>'
         );
 
-        // Стили для кнопки
-        topButton.css({
-            'display': 'flex',
-            'align-items': 'center',
-            'justify-content': 'center',
-            'width': '40px',
-            'height': '40px',
-            'margin-left': '10px',
-            'cursor': 'pointer',
-            'transition': 'all 0.3s ease'
-        });
-
-        // Hover эффекты
-        topButton.on("mouseenter", function () {
-            $(this).css({
-                'transform': 'scale(1.1)',
-                'opacity': '0.8'
-            });
-        });
-
-        topButton.on("mouseleave", function () {
-            $(this).css({
-                'transform': 'scale(1)',
-                'opacity': '1'
-            });
-        });
-
-        // Клик
-        topButton.on("click", function () {
-            // Анимация клика
-            $(this).css({
-                'transform': 'rotate(360deg) scale(1.2)',
-                'opacity': '0.6'
-            });
-
-            // Обновление через 300ms
-            setTimeout(function() {
-                refreshLampa();
-            }, 300);
-
-            // Сброс анимации через 1 секунду
-            setTimeout(function() {
-                $(this).css({
-                    'transform': 'scale(1)',
-                    'opacity': '1'
-                });
-            }.bind(this), 1000);
-        });
-
-        // Функция обновления
-        function refreshLampa() {
-            // Метод 1: Lampa view refresh
-            try {
-                if (Lampa.Listener && Lampa.Listener.emit) {
-                    Lampa.Listener.emit('view', { type: 'refresh' });
-                    return;
-                }
-            } catch (e) {}
-            
-            // Метод 2: Lampa navigation refresh
-            try {
-                if (Lampa.Listener && Lampa.Listener.emit) {
-                    Lampa.Listener.emit('navigate', { type: 'refresh' });
-                    return;
-                }
-            } catch (e) {}
-            
-            // Метод 3: Lampa full refresh
-            try {
-                if (Lampa.Listener && Lampa.Listener.emit) {
-                    Lampa.Listener.emit('full', { type: 'refresh' });
-                    return;
-                }
-            } catch (e) {}
-            
-            // Fallback: page reload
-            try {
-                if (window.location && window.location.reload) {
-                    window.location.reload();
-                }
-            } catch (e) {}
-        }
-
-        // Попробовать добавить в разные верхние меню
-        var topMenuSelectors = [
-            '.head__actions',
-            '.head__action',
-            '.view--header',
-            '.view--navigation',
-            '.header .menu',
-            '.top-menu',
-            '.upper-menu'
-        ];
-
-        var added = false;
-        for (var i = 0; i < topMenuSelectors.length; i++) {
-            var topMenu = $(topMenuSelectors[i]);
-            if (topMenu.length > 0) {
-                // Проверить, нет ли уже кнопки
-                if (topMenu.find('.refresh-top-btn').length === 0) {
-                    topMenu.append(topButton);
-                    added = true;
-                    break;
-                }
+        // Добавляем в верхнее меню
+        var topMenu = $('.head__actions');
+        if (topMenu.length > 0) {
+            // Проверить, нет ли уже кнопки
+            if (topMenu.find('.refresh-top-btn').length === 0) {
+                topMenu.append(topButton);
             }
-        }
-
-        // Если не удалось добавить в верхнее меню, добавить как плавающую кнопку
-        if (!added) {
+        } else {
+            // Если верхнее меню не найдено, добавить как плавающую кнопку
             topButton.css({
                 'position': 'fixed',
                 'top': '20px',
@@ -151,22 +50,58 @@
                 'z-index': '999999',
                 'background': '#ff6b6b',
                 'color': 'white',
-                'border-radius': '20px',
+                'width': '50px',
+                'height': '50px',
+                'border-radius': '25px',
+                'display': 'flex',
+                'align-items': 'center',
+                'justify-content': 'center',
+                'font-size': '24px',
+                'cursor': 'pointer',
                 'box-shadow': '0 4px 20px rgba(0,0,0,0.5)'
             });
             $('body').append(topButton);
         }
+
+        // Обработчик клика (точно как в exit плагине)
+        topButton.on("click", function () {
+            // Попробовать обновить через Lampa API
+            try {
+                if (Lampa.Listener && Lampa.Listener.emit) {
+                    Lampa.Listener.emit('view', { type: 'refresh' });
+                }
+            } catch (e) {}
+            
+            // Попробовать обновить через navigation
+            try {
+                if (Lampa.Listener && Lampa.Listener.emit) {
+                    Lampa.Listener.emit('navigate', { type: 'refresh' });
+                }
+            } catch (e) {}
+            
+            // Попробовать обновить через full event
+            try {
+                if (Lampa.Listener && Lampa.Listener.emit) {
+                    Lampa.Listener.emit('full', { type: 'refresh' });
+                }
+            } catch (e) {}
+            
+            // Fallback: попробовать обновить страницу
+            try {
+                if (window.location && window.location.reload) {
+                    window.location.reload();
+                }
+            } catch (e) {}
+        });
     }
 
     function createTopRefreshMenu() {
         window.plugin_refresh_top_ready = true;
         Lampa.Component.add("refresh_top", refresh_top);
-        
-        if (window.appready) {
-            addToTopMenu();
-        } else {
+        if (window.appready) add();
+        else {
             Lampa.Listener.follow("app", function (e) {
-                if (e.type == "ready") addToTopMenu();
+                if (e.type == "ready") add();
             });
         }
     }
