@@ -24,11 +24,9 @@
             // Fallback: page reload
             location.reload();
         });
-        
-        // Показываем кнопку
-        $('#RELOAD').removeClass('hide');
-    }
-            $('#EXIT').on('hover:enter hover:click hover:touch', function() {
+
+        //---
+                    $('#EXIT').on('hover:enter hover:click hover:touch', function() {
             // Показываем уведомление
             Lampa.Noty.show('Выход из приложения...');
             
@@ -58,10 +56,13 @@
                 }
             }, 1000);
         });
-        
+
+        // Показываем кнопку
+        $('#RELOAD').removeClass('hide');
         // Показываем кнопку
         $('#EXIT').removeClass('hide');
     }
+
     
     // Если всё готово
     if(window.appready) {
@@ -75,4 +76,5 @@
     }
     
 })();
+
 
